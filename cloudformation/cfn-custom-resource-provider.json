@@ -1,14 +1,14 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
-  "Description": "CloudFormation Custom Secret generator",
+  "Description": "Deployment of CloudFormation Custom Secret Provider",
   "Parameters": {
     "LambdaS3Bucket": {
       "Type": "String",
       "Default": ""
     },
-    "CFNSecretGeneratorZipFileName": {
+    "CFNSecretProviderZipFileName": {
       "Type": "String",
-      "Default": "lambdas/cfn-custom-secret-generator-latest.zip"
+      "Default": "lambdas/cfn-custom-secret-provider-latest.zip"
     }
   },
   "Conditions": {
@@ -28,7 +28,7 @@
         "LambdaRole"
       ],
       "Properties": {
-        "PolicyName": "CFNCustomSecretGeneratorPolicy",
+        "PolicyName": "CFNCustomSecretProviderPolicy",
         "PolicyDocument": {
           "Version": "2012-10-17",
           "Statement": [
@@ -87,13 +87,13 @@
         }
       }
     },
-    "CFNSecretGenerator": {
+    "CFNSecretProvider": {
       "Type": "AWS::Lambda::Function",
       "DependsOn": [
         "LambdaRole"
       ],
       "Properties": {
-        "Description": "CloudFormation Custom:SecretGenerator implementation",
+        "Description": "CloudFormation Custom:SecretProvider implementation",
         "Code": {
           "S3Bucket": {
             "Fn::If": [
@@ -115,7 +115,7 @@
             ]
           },
           "S3Key": {
-            "Ref": "CFNSecretGeneratorZipFileName"
+            "Ref": "CFNSecretProviderZipFileName"
           }
         },
         "FunctionName": {
@@ -129,11 +129,11 @@
               {
                 "Ref": "AWS::AccountId"
               },
-              "function:CFNCustomSecretGenerator"
+              "function:CFNCustomSecretProvider"
             ]
           ]
         },
-        "Handler": "cfn_secret_generator.handler",
+        "Handler": "cfn_secret_provider.handler",
         "MemorySize": 128,
         "Role": {
           "Fn::GetAtt": [ "LambdaRole", "Arn" ]

@@ -1,6 +1,6 @@
 import sys
 import uuid
-import cfn_secret_generator
+import cfn_secret_provider
 
 
 class Event(dict):
@@ -24,7 +24,7 @@ def test_create():
     # create a test parameter
     name = '/test/parameter-%s' % uuid.uuid4()
     event = Event('Create', name)
-    response = cfn_secret_generator.create_secret(event, {})
+    response = cfn_secret_provider.create_secret(event, {})
     assert response['Status'] == 'SUCCESS', response['Reason']
     assert 'PhysicalResourceId' in response
     physical_resource_id = response['PhysicalResourceId']
@@ -36,7 +36,7 @@ def test_create():
 
     # delete the parameters
     event = Event('Delete', name, physical_resource_id)
-    response = cfn_secret_generator.delete_secret(event, {})
+    response = cfn_secret_provider.delete_secret(event, {})
     assert response['Status'] == 'SUCCESS', response['Reason']
 
 
@@ -44,11 +44,11 @@ def test_prevent_duplicate_create():
     # prevent duplicate create
     name = '/test/parameter-%s' % uuid.uuid4()
     event = Event('Create', name)
-    response = cfn_secret_generator.create_secret(event, {})
+    response = cfn_secret_provider.create_secret(event, {})
     assert response['Status'] == 'SUCCESS', response['Reason']
 
     event = Event('Create', name)
-    response = cfn_secret_generator.create_secret(event, {})
+    response = cfn_secret_provider.create_secret(event, {})
     assert response['Status'] == 'FAILED', response['Reason']
 
 
@@ -56,14 +56,14 @@ def test_update_name():
     # update parameter name
     name = '/test/parameter-%s' % uuid.uuid4()
     event = Event('Create', name)
-    response = cfn_secret_generator.create_secret(event, {})
+    response = cfn_secret_provider.create_secret(event, {})
     assert response['Status'] == 'SUCCESS', response['Reason']
     assert 'PhysicalResourceId' in response
     physical_resource_id = response['PhysicalResourceId']
 
     name_2 = '%s-2' % name
     event = Event('Update', name_2, physical_resource_id)
-    response = cfn_secret_generator.update_secret(event, {})
+    response = cfn_secret_provider.update_secret(event, {})
     assert response['Status'] == 'SUCCESS', response['Reason']
     assert 'PhysicalResourceId' in response
     assert 'Data' in response and 'Secret' in response['Data']
@@ -73,11 +73,11 @@ def test_update_name():
 
     # delete the parameters
     event = Event('Delete', name, physical_resource_id)
-    response = cfn_secret_generator.delete_secret(event, {})
+    response = cfn_secret_provider.delete_secret(event, {})
     assert response['Status'] == 'SUCCESS', response['Reason']
 
     event = Event('Delete', name, physical_resource_id_2)
-    response = cfn_secret_generator.delete_secret(event, {})
+    response = cfn_secret_provider.delete_secret(event, {})
     assert response['Status'] == 'SUCCESS', response['Reason']
 
 
@@ -85,26 +85,26 @@ def test_prevent_duplicate_through_update():
     # update parameter name
     name = '/test/parameter-%s' % uuid.uuid4()
     event = Event('Create', name)
-    response = cfn_secret_generator.create_secret(event, {})
+    response = cfn_secret_provider.create_secret(event, {})
     assert response['Status'] == 'SUCCESS', response['Reason']
     physical_resource_id = response['PhysicalResourceId']
 
     name_2 = '%s-2' % name
     event = Event('Create', name_2)
-    response = cfn_secret_generator.update_secret(event, {})
+    response = cfn_secret_provider.update_secret(event, {})
     assert response['Status'] == 'SUCCESS', response['Reason']
     assert 'PhysicalResourceId' in response
     physical_resource_id_2 = response['PhysicalResourceId']
 
     event = Event('Update', name, physical_resource_id_2)
-    response = cfn_secret_generator.update_secret(event, {})
+    response = cfn_secret_provider.update_secret(event, {})
     assert response['Status'] == 'FAILED', response['Reason']
 
     # delete the parameters
     event = Event('Delete', name, physical_resource_id)
-    response = cfn_secret_generator.delete_secret(event, {})
+    response = cfn_secret_provider.delete_secret(event, {})
     assert response['Status'] == 'SUCCESS', response['Reason']
 
     event = Event('Delete', name, physical_resource_id_2)
-    response = cfn_secret_generator.delete_secret(event, {})
+    response = cfn_secret_provider.delete_secret(event, {})
     assert response['Status'] == 'SUCCESS', response['Reason']

@@ -1,4 +1,4 @@
-# cfn-custom-secret-generator
+# cfn-custom-secret-provider
 A CloudFormation custom resource provider for managing secrets
 
 One of the biggest problems I encounter in creating immutable infrastructures, is dealing with secrets. Secrets must always be different per
@@ -17,7 +17,7 @@ It is quite easy: you specify a CloudFormation resource of the [Custom::Secret](
         "Name": "/test-api/postgres/root/PGPASSWORD",
         "Alphabet": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_@#!",
         "Length": 30,
-        "ServiceToken": { "Fn::Join": [ ":", [ "arn:aws:lambda", { "Ref": "AWS::Region" }, { "Ref": "AWS::AccountId" }, "function:CFNCustomSecretGenerator" ] ]
+        "ServiceToken": { "Fn::Join": [ ":", [ "arn:aws:lambda", { "Ref": "AWS::Region" }, { "Ref": "AWS::AccountId" }, "function:CFNCustomSecretProvider" ] ]
         }
       }
     }

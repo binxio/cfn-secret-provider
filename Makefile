@@ -1,6 +1,6 @@
 include Makefile.mk
 
-NAME=cfn-custom-secret-generator
+NAME=cfn-custom-secret-provider
 
 
 deploy:
@@ -15,7 +15,7 @@ do-push: deploy
 
 do-build: local-build
 
-local-build: src/cfn_secret_generator.py venv requirements.txt
+local-build: src/cfn_secret_provider.py venv requirements.txt
 	mkdir -p target/content 
 	pip install -t target/content -r requirements.txt
 	cp -r src/* target/content
@@ -32,7 +32,7 @@ venv: requirements.txt
 clean:
 	rm -rf venv target
 
-test:
+test: venv
 	. ./venv/bin/activate && \
 	pip install -r test-requirements.txt && \
 	cd src && \

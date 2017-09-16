@@ -2,7 +2,7 @@
   "AWSTemplateFormatVersion": "2010-09-09",
   "Resources": {
     "DBPassword": {
-      "Type": "Custom::SecretGenerator",
+      "Type": "Custom::SecretProvider",
       "Properties": {
         "Name": "/test-api/postgres/root/PGPASSWORD",
         "Alphabet": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_@#!",
@@ -18,7 +18,7 @@
               {
                 "Ref": "AWS::AccountId"
               },
-              "function:CFNCustomSecretGenerator"
+              "function:CFNCustomSecretProvider"
             ]
           ]
         }
