@@ -4,7 +4,7 @@
     "DBPassword": {
       "Type": "Custom::SecretProvider",
       "Properties": {
-        "Name": "/test-api/postgres/root/PGPASSWORD",
+        "Name": "/postgres/root/PGPASSWORD",
         "Alphabet": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_@#!",
         "Length": 30,
         "ServiceToken": {
@@ -33,7 +33,16 @@
           "Secret"
         ]
       },
-      "Description": "You should not do this of course"
+      "Description": "the generated secret, do expose this as Output Parameter in production"
+    },
+    "Arn": {
+      "Value": {
+        "Fn::GetAtt": [
+          "DBPassword",
+          "Arn"
+        ]
+      },
+      "Description": "ARN of the parameter in the Store"
     }
   }
 }

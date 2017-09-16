@@ -14,7 +14,8 @@ It is quite easy: you specify a CloudFormation resource of the [Custom::Secret](
     "DBPassword": {
       "Type": "Custom::Secret",
       "Properties": {
-        "Name": "/test-api/postgres/root/PGPASSWORD",
+        "Name": "/postgres/root/PGPASSWORD",
+        "KeyAlias": "alias/aws/ssm",
         "Alphabet": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_@#!",
         "Length": 30,
         "ServiceToken": { "Fn::Join": [ ":", [ "arn:aws:lambda", { "Ref": "AWS::Region" }, { "Ref": "AWS::AccountId" }, "function:CFNCustomSecretProvider" ] ]
@@ -33,10 +34,33 @@ If you need to access the secret in your cloudformation module, you can do that 
 
 ## Installation
 To install this Custom Resource, type:
-```
-make deploy-provider
+
+```sh
+aws cloudformation create-stack \
+	--capabilities CAPABILITY_IAM \
+	--stack-name cfn-custom-secret-provider \
+	--template-body file://cloudformation/cfn-custom-resource-provider.json 
+
+aws cloudformation wait stack-create-complete  --stack-name cfn-custom-secret-provider 
 ```
 
+This CloudFormation template will use our pre-packaged provider from `s3://binxio-public/lambdas/cfn-custom-secret-provider-latest.zip`.
+
+
+## Demo
+To install the simple sample of the Custom Resource, type:
+
+```sh
+aws cloudformation create-stack --stack-name cfn-custom-secret-provider-demo \
+	--template-body file://cloudformation/demo-stack.json
+aws cloudformation wait stack-create-complete  --stack-name cfn-custom-secret-provider-demo
+```
+
+to validate the result, type:
+
+```sh
+aws ssm get-parameter --name /prod/postgres/root/PGPASSWORD 
+```
 
 ## Conclusion
 With this solution: 
