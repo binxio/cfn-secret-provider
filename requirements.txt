@@ -1,2 +1,2 @@
-boto3
-cfn_resource
+boto3==1.4.7
+cfn-resource==0.2.3
