@@ -1,0 +1,147 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "CloudFormation Custom Secret generator",
+  "Parameters": {
+    "LambdaS3Bucket": {
+      "Type": "String",
+      "Default": ""
+    },
+    "CFNSecretGeneratorZipFileName": {
+      "Type": "String",
+      "Default": "lambdas/cfn-custom-secret-generator-latest.zip"
+    }
+  },
+  "Conditions": {
+    "UsePublicBucket": {
+      "Fn::Equals": [
+        {
+          "Ref": "LambdaS3Bucket"
+        },
+        ""
+      ]
+    }
+  },
+  "Resources": {
+    "LambdaPolicy": {
+      "Type": "AWS::IAM::Policy",
+      "DependsOn": [
+        "LambdaRole"
+      ],
+      "Properties": {
+        "PolicyName": "CFNCustomSecretGeneratorPolicy",
+        "PolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Action": [
+                "ssm:DescribeParameters",
+                "ssm:PutParameter",
+                "ssm:GetParameter",
+                "ssm:GetParameters",
+                "ssm:DeleteParameter"
+              ],
+              "Resource": [
+                "*"
+              ]
+            },
+            {
+              "Effect": "Allow",
+              "Action": [
+                "kms:Encrypt"
+              ],
+              "Resource": [
+                "*"
+              ]
+            },
+            {
+              "Action": [
+                "logs:*"
+              ],
+              "Resource": "arn:aws:logs:*:*:*",
+              "Effect": "Allow"
+            }
+          ]
+        },
+        "Roles": [
+            { "Ref": "LambdaRole" }
+        ]
+      }
+    },
+    "LambdaRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Action": [
+                "sts:AssumeRole"
+              ],
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [
+                  "lambda.amazonaws.com"
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
+    "CFNSecretGenerator": {
+      "Type": "AWS::Lambda::Function",
+      "DependsOn": [
+        "LambdaRole"
+      ],
+      "Properties": {
+        "Description": "CloudFormation Custom:SecretGenerator implementation",
+        "Code": {
+          "S3Bucket": {
+            "Fn::If": [
+              "UsePublicBucket",
+              {
+                "Fn::Join": [
+                  "-",
+                  [
+                    "binxio-public",
+                    {
+                      "Ref": "AWS::Region"
+                    }
+                  ]
+                ]
+              },
+              {
+                "Ref": "LambdaS3Bucket"
+              }
+            ]
+          },
+          "S3Key": {
+            "Ref": "CFNSecretGeneratorZipFileName"
+          }
+        },
+        "FunctionName": {
+          "Fn::Join": [
+            ":",
+            [
+              "arn:aws:lambda",
+              {
+                "Ref": "AWS::Region"
+              },
+              {
+                "Ref": "AWS::AccountId"
+              },
+              "function:CFNCustomSecretGenerator"
+            ]
+          ]
+        },
+        "Handler": "cfn_secret_generator.handler",
+        "MemorySize": 128,
+        "Role": {
+          "Fn::GetAtt": [ "LambdaRole", "Arn" ]
+        },
+        "Runtime": "python2.7"
+      }
+    }
+  }
+}
