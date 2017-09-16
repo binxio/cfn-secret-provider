@@ -27,8 +27,12 @@ def test_create():
     response = cfn_secret_generator.create_secret(event, {})
     assert response['Status'] == 'SUCCESS', response['Reason']
     assert 'PhysicalResourceId' in response
-    assert 'Data' in response and 'Secret' in response['Data']
     physical_resource_id = response['PhysicalResourceId']
+
+    assert 'Data' in response 
+    assert 'Secret' in response['Data']
+    assert 'Arn' in response['Data']
+    assert response['Data']['Arn'] == physical_resource_id
 
     # delete the parameters
     event = Event('Delete', name, physical_resource_id)

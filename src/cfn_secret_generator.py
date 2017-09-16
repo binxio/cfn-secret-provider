@@ -19,6 +19,15 @@ account_id = sts.get_caller_identity()['Account']
 handler = cfn_resource.Resource()
 
 
+class Response(dict):
+
+    def __init__(self, status, reason, resource_id, data={}):
+        self['Status'] = status
+        self['Reason'] = reason
+        self['PhysicalResourceId'] = resource_id
+        self['Data'] = data
+
+
 class Secret(dict):
 
     def __init__(self, event):
@@ -70,15 +79,6 @@ class Secret(dict):
         return 'arn:aws:ssm:%s:%s:parameter/%s' % (region, account_id, self.name)
 
 
-class Response(dict):
-
-    def __init__(self, status, reason, resource_id, data={}):
-        self['Status'] = status
-        self['Reason'] = reason
-        self['PhysicalResourceId'] = resource_id
-        self['Data'] = data
-
-
 def create_or_update_secret(event, context):
     secret = Secret(event)
     if secret.name is None:
@@ -90,7 +90,7 @@ def create_or_update_secret(event, context):
     except ClientError as e:
         return Response('FAILED', str(e), 'could-not-create')
 
-    return Response('SUCCESS', '', secret.arn, {'Secret': secret.value})
+    return Response('SUCCESS', '', secret.arn, {'Secret': secret.value, 'Arn': secret.arn})
 
 
 @handler.create
