@@ -23,10 +23,10 @@ To declare this entity in your AWS CloudFormation template, use the following sy
 You can specify the following properties:
 
 - `Name`  - the name of the parameter in the Parameter Store (required)
-- `Alphabet` - the alphabet of characters from which to generate a secret (defaults to ASCII letters, digits and `!@#$^*+=`.)
-- `Length`  - the length of the secret (default `30`).
+- `Alphabet` - the alphabet of characters from which to generate a secret (defaults to ASCII letters, digits and `!@#$^*+=`)
+- `Length`  - the length of the secret (default `30`)
 - `KeyAlias`  - to use to encrypt the string (default `alias/aws/ssm`)
-- `ServiceToken`  - points the the lambda function deployed in your account.
+- `ServiceToken`  - points the the lambda function deployed in your account
 
 ## Return values
 With 'Fn::GetAtt' the following values are available:

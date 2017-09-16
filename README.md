@@ -29,7 +29,7 @@ After the deployment, a 30 character random string can be found in the EC Parame
 If you need to access the secret in your cloudformation module, you can do that too.
 
 ```json
-        "MasterUserPassword": { "Fn::GetAtt": [ "DBPassword", "Secret" }}
+        "MasterUserPassword": { "Fn::GetAtt": [ "DBPassword", "Secret" ]}
 ```
 
 ## Installation
