@@ -27,16 +27,16 @@ local-build: src/cfn_secret_generator.py venv requirements.txt
 venv: requirements.txt
 	virtualenv venv  && \
 	. ./venv/bin/activate && \
-	pip install -r requirements.txt
+	pip install -r requirements.txt 
 	
 clean:
 	rm -rf venv target
 
 test:
 	. ./venv/bin/activate && \
-		pip install nosetests && \
-		cd src && \
-		 nosetests ../tests/*.py
+	pip install -r test-requirements.txt && \
+	cd src && \
+	nosetests ../tests/*.py 
 
 autopep:
 	autopep8 --experimental --in-place --max-line-length 132 src/*.py tests/*.py
