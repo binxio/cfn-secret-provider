@@ -35,10 +35,8 @@
             {
               "Effect": "Allow",
               "Action": [
-                "ssm:DescribeParameters",
                 "ssm:PutParameter",
                 "ssm:GetParameter",
-                "ssm:GetParameters",
                 "ssm:DeleteParameter"
               ],
               "Resource": [
