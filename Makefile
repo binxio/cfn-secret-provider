@@ -1,6 +1,7 @@
 include Makefile.mk
 
 NAME=cfn-custom-secret-provider
+AWS_REGION=eu-central-1
 
 help:
 	@echo 'make                 - builds a zip file to target/.'
@@ -13,11 +14,18 @@ help:
 	@echo 'make delete-demo     - deletes the demo cloudformation stack.'
 
 deploy:
-	aws s3 --region eu-west-1 cp target/$(NAME)-$(VERSION).zip s3://binxio-public-eu-west-1/lambdas/$(NAME)-$(VERSION).zip 
-	aws s3api --region eu-west-1 put-object-acl --bucket binxio-public-eu-west-1 --acl public-read --key lambdas/$(NAME)-$(VERSION).zip 
-	aws s3 --region eu-west-1 cp \
-		s3://binxio-public-eu-west-1/lambdas/$(NAME)-$(VERSION).zip \
-		s3://binxio-public-eu-west-1/lambdas/$(NAME)-latest.zip 
+	aws s3 --region $(AWS_REGION) \
+		cp target/$(NAME)-$(VERSION).zip \
+		s3://binxio-public-$(AWS_REGION)/lambdas/$(NAME)-$(VERSION).zip 
+	aws s3 --region $(AWS_REGION) cp \
+		s3://binxio-public-$(AWS_REGION)/lambdas/$(NAME)-$(VERSION).zip \
+		s3://binxio-public-$(AWS_REGION)/lambdas/$(NAME)-latest.zip 
+	aws s3api --region $(AWS_REGION) \
+		put-object-acl --bucket binxio-public-$(AWS_REGION) \
+		--acl public-read --key lambdas/$(NAME)-$(VERSION).zip 
+	aws s3api --region $(AWS_REGION) \
+		put-object-acl --bucket binxio-public-$(AWS_REGION) \
+		--acl public-read --key lambdas/$(NAME)-latest.zip 
 
 do-push: deploy
 
