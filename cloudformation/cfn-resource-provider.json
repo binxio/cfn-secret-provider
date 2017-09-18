@@ -8,7 +8,7 @@
     },
     "CFNSecretProviderZipFileName": {
       "Type": "String",
-      "Default": "lambdas/cfn-custom-secret-provider-latest.zip"
+      "Default": "lambdas/cfn-secret-provider-latest.zip"
     }
   },
   "Conditions": {
@@ -93,7 +93,7 @@
         "LambdaRole"
       ],
       "Properties": {
-        "Description": "CloudFormation Custom:SecretProvider implementation",
+        "Description": "CloudFormation Custom:Secret implementation",
         "Code": {
           "S3Bucket": {
             "Fn::If": [
@@ -129,7 +129,7 @@
               {
                 "Ref": "AWS::AccountId"
               },
-              "function:CFNCustomSecretProvider"
+              "function:binxio-cfn-secret-provider"
             ]
           ]
         },

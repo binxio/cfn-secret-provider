@@ -1,6 +1,6 @@
 include Makefile.mk
 
-NAME=cfn-custom-secret-provider
+NAME=cfn-secret-provider
 AWS_REGION=eu-central-1
 
 help:
@@ -64,13 +64,13 @@ deploy-provider:
 		aws cloudformation create-stack \
 			--capabilities CAPABILITY_IAM \
 			--stack-name $(NAME) \
-			--template-body file://cloudformation/cfn-custom-resource-provider.json ; \
+			--template-body file://cloudformation/cfn-resource-provider.json ; \
 		aws cloudformation wait stack-create-complete  --stack-name $(NAME) ; \
 	else \
 		aws cloudformation update-stack \
 			--capabilities CAPABILITY_IAM \
 			--stack-name $(NAME) \
-			--template-body file://cloudformation/cfn-custom-resource-provider.json ; \
+			--template-body file://cloudformation/cfn-resource-provider.json ; \
 		aws cloudformation wait stack-update-complete  --stack-name $(NAME) ; \
 	fi
 

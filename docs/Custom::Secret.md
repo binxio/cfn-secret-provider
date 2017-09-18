@@ -26,7 +26,7 @@ You can specify the following properties:
 - `Alphabet` - the alphabet of characters from which to generate a secret (defaults to ASCII letters, digits and `!@#$^*+=`)
 - `Length`  - the length of the secret (default `30`)
 - `KeyAlias`  - to use to encrypt the string (default `alias/aws/ssm`)
-- `ServiceToken`  - points the the lambda function deployed in your account
+- `ServiceToken`  - ARN pointing to the lambda function implementing this resource 
 
 ## Return values
 With 'Fn::GetAtt' the following values are available:

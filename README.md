@@ -1,4 +1,4 @@
-# cfn-custom-secret-provider
+# cfn-secret-provider
 A CloudFormation custom resource provider for managing secrets
 
 One of the biggest problems I encounter in creating immutable infrastructures, is dealing with secrets. Secrets must always be different per
@@ -18,7 +18,7 @@ It is quite easy: you specify a CloudFormation resource of the [Custom::Secret](
         "KeyAlias": "alias/aws/ssm",
         "Alphabet": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_@#!",
         "Length": 30,
-        "ServiceToken": { "Fn::Join": [ ":", [ "arn:aws:lambda", { "Ref": "AWS::Region" }, { "Ref": "AWS::AccountId" }, "function:CFNCustomSecretProvider" ] ]
+        "ServiceToken": { "Fn::Join": [ ":", [ "arn:aws:lambda", { "Ref": "AWS::Region" }, { "Ref": "AWS::AccountId" }, "function:binxio-cfn-secret-provider" ] ]
         }
       }
     }
@@ -38,22 +38,22 @@ To install this Custom Resource, type:
 ```sh
 aws cloudformation create-stack \
 	--capabilities CAPABILITY_IAM \
-	--stack-name cfn-custom-secret-provider \
+	--stack-name cfn-secret-provider \
 	--template-body file://cloudformation/cfn-custom-resource-provider.json 
 
-aws cloudformation wait stack-create-complete  --stack-name cfn-custom-secret-provider 
+aws cloudformation wait stack-create-complete  --stack-name cfn-secret-provider 
 ```
 
-This CloudFormation template will use our pre-packaged provider from `s3://binxio-public/lambdas/cfn-custom-secret-provider-latest.zip`.
+This CloudFormation template will use our pre-packaged provider from `s3://binxio-public/lambdas/cfn-secret-provider-latest.zip`.
 
 
 ## Demo
 To install the simple sample of the Custom Resource, type:
 
 ```sh
-aws cloudformation create-stack --stack-name cfn-custom-secret-provider-demo \
+aws cloudformation create-stack --stack-name cfn-secret-provider-demo \
 	--template-body file://cloudformation/demo-stack.json
-aws cloudformation wait stack-create-complete  --stack-name cfn-custom-secret-provider-demo
+aws cloudformation wait stack-create-complete  --stack-name cfn-secret-provider-demo
 ```
 
 to validate the result, type:
