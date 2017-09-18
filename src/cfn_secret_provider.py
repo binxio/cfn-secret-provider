@@ -50,7 +50,7 @@ class Secret(dict):
 
     @property
     def allowed_characters(self):
-        return self['Alphabet'] if 'Alphabet' in self else (string.ascii_letters + string.digits)
+        return self['Alphabet'] if 'Alphabet' in self else (string.ascii_letters + string.digits + string.punctuation)
 
     @property
     def logical_resource_id(self):

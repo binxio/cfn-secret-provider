@@ -16,7 +16,7 @@ It is quite easy: you specify a CloudFormation resource of the [Custom::Secret](
       "Properties": {
         "Name": "/postgres/root/PGPASSWORD",
         "KeyAlias": "alias/aws/ssm",
-        "Alphabet": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_@#!",
+        "Alphabet": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
         "Length": 30,
         "ServiceToken": { "Fn::Join": [ ":", [ "arn:aws:lambda", { "Ref": "AWS::Region" }, { "Ref": "AWS::AccountId" }, "function:binxio-cfn-secret-provider" ] ]
         }
