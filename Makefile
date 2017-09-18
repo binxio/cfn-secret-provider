@@ -78,7 +78,7 @@ delete-provider:
 	aws cloudformation delete-stack --stack-name $(NAME)
 	aws cloudformation wait stack-delete-complete  --stack-name $(NAME)
 
-demo: deploy-provider
+demo: 
 	aws cloudformation create-stack --stack-name $(NAME)-demo \
 		--template-body file://cloudformation/demo-stack.json  
 	aws cloudformation wait stack-create-complete  --stack-name $(NAME)-demo

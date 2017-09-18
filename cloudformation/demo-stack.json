@@ -18,7 +18,7 @@
               {
                 "Ref": "AWS::AccountId"
               },
-              "function:CFNCustomSecretProvider"
+              "function:binxio-cfn-secret-provider"
             ]
           ]
         }
