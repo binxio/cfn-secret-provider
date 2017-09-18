@@ -1,6 +1,6 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
-  "Description": "Deployment of CloudFormation Custom Secret Provider",
+  "Description": "CloudFormation Secret Provider",
   "Parameters": {
     "LambdaS3Bucket": {
       "Type": "String",
