@@ -33,7 +33,7 @@ do-build: local-build
 
 local-build: src/cfn_secret_provider.py venv requirements.txt
 	mkdir -p target/content 
-	pip install -t target/content -r requirements.txt
+	pip --quiet install -t target/content -r requirements.txt
 	cp -r src/* target/content
 	find target/content -type d | xargs  chmod ugo+rx 
 	find target/content -type f | xargs  chmod ugo+r 
@@ -43,7 +43,7 @@ local-build: src/cfn_secret_provider.py venv requirements.txt
 venv: requirements.txt
 	virtualenv venv  && \
 	. ./venv/bin/activate && \
-	pip install -r requirements.txt 
+	pip --quiet install -r requirements.txt 
 	
 clean:
 	rm -rf venv target
@@ -51,7 +51,7 @@ clean:
 test: venv
 	jq . cloudformation/*.json > /dev/null
 	. ./venv/bin/activate && \
-	pip install -r test-requirements.txt && \
+	pip --quiet install -r test-requirements.txt && \
 	cd src && \
 	nosetests ../tests/*.py 
 

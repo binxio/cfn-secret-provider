@@ -14,7 +14,8 @@ To declare this entity in your AWS CloudFormation template, use the following sy
     "Alphabet" : String,
     "Length" : Integer,
     "KeyAlias" : String,
-    "ServiceToken" : String
+    "ServiceToken" : String,
+    "ReturnSecret": Bool
   }
 }
 ```
@@ -26,6 +27,7 @@ You can specify the following properties:
 - `Alphabet` - the alphabet of characters from which to generate a secret (defaults to ASCII letters, digits and punctuation characters)
 - `Length`  - the length of the secret (default `30`)
 - `KeyAlias`  - to use to encrypt the string (default `alias/aws/ssm`)
+- `ReturnSecret`  - as an attribute. (Default 'False')
 - `ServiceToken`  - ARN pointing to the lambda function implementing this resource 
 
 ## Return values

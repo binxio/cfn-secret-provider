@@ -18,6 +18,7 @@ It is quite easy: you specify a CloudFormation resource of the [Custom::Secret](
         "KeyAlias": "alias/aws/ssm",
         "Alphabet": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
         "Length": 30,
+        "ReturnSecret": true,
         "ServiceToken": { "Fn::Join": [ ":", [ "arn:aws:lambda", { "Ref": "AWS::Region" }, { "Ref": "AWS::AccountId" }, "function:binxio-cfn-secret-provider" ] ]
         }
       }
@@ -26,7 +27,7 @@ It is quite easy: you specify a CloudFormation resource of the [Custom::Secret](
 ```
 After the deployment, a 30 character random string can be found in the EC Parameter Store with the name `/test-api/postgres/root/PGPASSWORD`.
 
-If you need to access the secret in your cloudformation module, you can do that too.
+If you need to access the secret in your cloudformation module, you need to specify `ReturnSecret` and reference it as the attribute `Secret`.
 
 ```json
         "MasterUserPassword": { "Fn::GetAtt": [ "DBPassword", "Secret" ]}

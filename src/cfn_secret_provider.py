@@ -41,6 +41,10 @@ class Secret(dict):
         return int(self['Length']) if 'Length' in self else 30
 
     @property
+    def return_secret(self):
+        return str(self['ReturnSecret']).lower() == 'true' if 'ReturnSecret' in self else False
+
+    @property
     def key_alias(self):
         return self['KeyAlias'] if 'KeyAlias' in self else 'alias/aws/ssm'
 
@@ -81,16 +85,22 @@ class Secret(dict):
 
 def create_or_update_secret(event, context):
     secret = Secret(event)
+    result = {}
+
     if secret.name is None:
         return Response('Name property is required', 'could-not-create')
 
     try:
         ssm.put_parameter(Name=secret.name, KeyId=secret.key_alias,
                           Type='SecureString', Overwrite=secret.allow_overwrite, Value=secret.value)
+        result['Arn'] = secret.arn
+        if secret.return_secret:
+            result['Secret'] = secret.value
+
     except ClientError as e:
         return Response('FAILED', str(e), 'could-not-create')
 
-    return Response('SUCCESS', '', secret.arn, {'Secret': secret.value, 'Arn': secret.arn})
+    return Response('SUCCESS', '', secret.arn, result)
 
 
 @handler.create

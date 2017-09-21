@@ -24,12 +24,13 @@ def test_create():
     # create a test parameter
     name = '/test/parameter-%s' % uuid.uuid4()
     event = Event('Create', name)
+    event['ResourceProperties']['ReturnSecret'] = True
     response = cfn_secret_provider.create_secret(event, {})
     assert response['Status'] == 'SUCCESS', response['Reason']
     assert 'PhysicalResourceId' in response
     physical_resource_id = response['PhysicalResourceId']
 
-    assert 'Data' in response 
+    assert 'Data' in response
     assert 'Secret' in response['Data']
     assert 'Arn' in response['Data']
     assert response['Data']['Arn'] == physical_resource_id
@@ -63,6 +64,7 @@ def test_update_name():
 
     name_2 = '%s-2' % name
     event = Event('Update', name_2, physical_resource_id)
+    event['ResourceProperties']['ReturnSecret'] = True
     response = cfn_secret_provider.update_secret(event, {})
     assert response['Status'] == 'SUCCESS', response['Reason']
     assert 'PhysicalResourceId' in response
@@ -106,5 +108,26 @@ def test_prevent_duplicate_through_update():
     assert response['Status'] == 'SUCCESS', response['Reason']
 
     event = Event('Delete', name, physical_resource_id_2)
+    response = cfn_secret_provider.delete_secret(event, {})
+    assert response['Status'] == 'SUCCESS', response['Reason']
+
+
+def test_create_no_return_secret():
+    # create a test parameter
+    name = '/test/parameter-%s' % uuid.uuid4()
+    event = Event('Create', name)
+    event['ResourceProperties']['ReturnSecret'] = False
+    response = cfn_secret_provider.create_secret(event, {})
+    assert response['Status'] == 'SUCCESS', response['Reason']
+    assert 'PhysicalResourceId' in response
+    physical_resource_id = response['PhysicalResourceId']
+
+    assert 'Data' in response
+    assert 'Secret' not in response['Data']
+    assert 'Arn' in response['Data']
+    assert response['Data']['Arn'] == physical_resource_id
+
+    # delete the parameters
+    event = Event('Delete', name, physical_resource_id)
     response = cfn_secret_provider.delete_secret(event, {})
     assert response['Status'] == 'SUCCESS', response['Reason']
