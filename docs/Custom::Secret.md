@@ -15,7 +15,8 @@ To declare this entity in your AWS CloudFormation template, use the following sy
     "Length" : Integer,
     "KeyAlias" : String,
     "ServiceToken" : String,
-    "ReturnSecret": Bool
+    "ReturnSecret": Bool,
+    "Version": String
   }
 }
 ```
@@ -29,11 +30,12 @@ You can specify the following properties:
 - `KeyAlias`  - to use to encrypt the string (default `alias/aws/ssm`)
 - `ReturnSecret`  - as an attribute. (Default 'False')
 - `ServiceToken`  - ARN pointing to the lambda function implementing this resource 
+- `Version`  - an opaque string to enforce the generation of a new secret.
 
 ## Return values
 With 'Fn::GetAtt' the following values are available:
 
-- `Secret` - the generated secret value.
+- `Secret` - the generated secret value, if `ReturnSecret` was set to True.
 - `Arn` - the AWS Resource name of the parameter
 
 For more information about using Fn::GetAtt, see [Fn::GetAtt](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/intrinsic-function-reference-getatt.html).

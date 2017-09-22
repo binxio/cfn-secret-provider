@@ -8,6 +8,7 @@
         "Alphabet": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_@#!",
         "Length": 30,
         "ReturnSecret": true,
+        "Version": "v1",
         "ServiceToken": {
           "Fn::Join": [
             ":",
