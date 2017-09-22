@@ -46,7 +46,7 @@ venv: requirements.txt
 	pip --quiet install -r requirements.txt 
 	
 clean:
-	rm -rf venv target
+	rm -rf venv target src/*.pyc tests/*.pyc
 
 test: venv
 	jq . cloudformation/*.json > /dev/null
