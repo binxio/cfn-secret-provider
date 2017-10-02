@@ -71,18 +71,15 @@ class SecretProvider(ResourceProvider):
                 self.set_attribute('Secret', value)
 
             self.set_physical_resource_id(self.arn)
-            self.success()
         except ClientError as e:
             self.set_physical_resource_id('could-not-create')
             self.fail(str(e))
 
     def create(self):
         self.create_or_update_secret()
-        return self.response
 
     def update(self):
         self.create_or_update_secret()
-        return self.response
 
     def delete(self):
         name = self.physical_resource_id.split('/', 1)
@@ -97,7 +94,6 @@ class SecretProvider(ResourceProvider):
         else:
             self.success('System Parameter with the name %s is ignored' %
                          self.physical_resource_id)
-        return self.response
 
 provider = SecretProvider()
 

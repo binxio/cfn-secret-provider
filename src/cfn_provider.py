@@ -37,6 +37,8 @@ class ResourceProvider(object):
         self.request = request
         self.context = context
         self.response = {
+            'Status': 'SUCCESS',
+            'Reason': '',
             'StackId': request['StackId'],
             'RequestId': request['RequestId'],
             'LogicalResourceId': request['LogicalResourceId'],
@@ -49,7 +51,11 @@ class ResourceProvider(object):
         """
         returns the custom resource property `name` if it exists, otherwise `default`
         """
-        return self.request['ResourceProperties'][name] if name in self.request['ResourceProperties'] else default
+        return self.properties[name] if name in self.properties else default
+
+    @property
+    def properties(self):
+        return self.request['ResourceProperties'] if self.request is not None and 'ResourceProperties' in self.request else {}
 
     @property
     def physical_resource_id(self):
@@ -88,7 +94,8 @@ class ResourceProvider(object):
         sets response status to SUCCESS
         """
         self.response['Status'] = 'SUCCESS'
-        self.response['Reason'] = reason if reason is not None else ''
+        if reason is not None:
+            self.response['Reason'] = reason
 
     def fail(self, reason):
         """
@@ -102,21 +109,18 @@ class ResourceProvider(object):
         implements the provider resource create. 
         """
         self.fail('create not implemented by %s' % self)
-        return self.response
 
     def update(self):
         """
         implements the provider resource update.
         """
         self.fail('update not implemented by %s' % self)
-        return self.response
 
     def delete(self):
         """
         implements the provider resource delete. 
         """
         self.fail('delete not implemented by %s' % self)
-        return self.response
 
     def execute(self):
         """
@@ -133,6 +137,9 @@ class ResourceProvider(object):
                     self.delete()
                 else:
                     self.fail('unknown RequestType %s received.' % request)
+            elif request == 'Delete':
+                # failure to delete an invalid request hangs your cfn...
+                self.success()
         else:
             self.fail('ResourceType %s not supported by provider %s' %
                       (self.request['ResourceType'], self.custom_cfn_resource_name))
@@ -153,7 +160,8 @@ class ResourceProvider(object):
         sends the response to `ResponseURL`
         """
         url = self.request['ResponseURL']
-        log.debug('sending response to %s request %s', url, json.dumps(self.response))
+        log.debug('sending response to %s request %s',
+                  url, json.dumps(self.response))
         r = requests.put(url, json=self.response)
         if r.status_code != 200:
             raise Exception('failed to put the response to %s status code %d, %s' %
