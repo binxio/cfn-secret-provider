@@ -1,17 +1,17 @@
 import sys
 import uuid
-import cfn_secret_provider
+from cfn_secret_provider import handler
 
 
-class Event(dict):
+class Request(dict):
 
     def __init__(self, request_type, name, physical_resource_id=None):
         self.update({
-            'RequestType': 'Create',
-            'ResponseURL': 'http://pre-signed-S3-url-for-response',
+            'RequestType': request_type,
+            'ResponseURL': 'https://httpbin.org/put',
             'StackId': 'arn:aws:cloudformation:us-west-2:EXAMPLE/stack-name/guid',
             'RequestId': 'request-%s' % uuid.uuid4(),
-            'ResourceType': 'Custom::SecretGenerator',
+            'ResourceType': 'Custom::Secret',
             'LogicalResourceId': 'MySecret',
             'ResourceProperties': {
                 'Name': name
@@ -23,9 +23,9 @@ class Event(dict):
 def test_create():
     # create a test parameter
     name = '/test/parameter-%s' % uuid.uuid4()
-    event = Event('Create', name)
-    event['ResourceProperties']['ReturnSecret'] = True
-    response = cfn_secret_provider.create_secret(event, {})
+    request = Request('Create', name)
+    request['ResourceProperties']['ReturnSecret'] = True
+    response = handler(request, {})
     assert response['Status'] == 'SUCCESS', response['Reason']
     assert 'PhysicalResourceId' in response
     physical_resource_id = response['PhysicalResourceId']
@@ -36,36 +36,36 @@ def test_create():
     assert response['Data']['Arn'] == physical_resource_id
 
     # delete the parameters
-    event = Event('Delete', name, physical_resource_id)
-    response = cfn_secret_provider.delete_secret(event, {})
+    request = Request('Delete', name, physical_resource_id)
+    response = handler(request, {})
     assert response['Status'] == 'SUCCESS', response['Reason']
 
 
-def test_prevent_duplicate_create():
-    # prevent duplicate create
+def test_request_duplicate_create():
+    # prrequest duplicate create
     name = '/test/parameter-%s' % uuid.uuid4()
-    event = Event('Create', name)
-    response = cfn_secret_provider.create_secret(event, {})
+    request = Request('Create', name)
+    response = handler(request, {})
     assert response['Status'] == 'SUCCESS', response['Reason']
 
-    event = Event('Create', name)
-    response = cfn_secret_provider.create_secret(event, {})
+    request = Request('Create', name)
+    response = handler(request, {})
     assert response['Status'] == 'FAILED', response['Reason']
 
 
 def test_update_name():
     # update parameter name
     name = '/test/parameter-%s' % uuid.uuid4()
-    event = Event('Create', name)
-    response = cfn_secret_provider.create_secret(event, {})
+    request = Request('Create', name)
+    response = handler(request, {})
     assert response['Status'] == 'SUCCESS', response['Reason']
     assert 'PhysicalResourceId' in response
     physical_resource_id = response['PhysicalResourceId']
 
     name_2 = '%s-2' % name
-    event = Event('Update', name_2, physical_resource_id)
-    event['ResourceProperties']['ReturnSecret'] = True
-    response = cfn_secret_provider.update_secret(event, {})
+    request = Request('Update', name_2, physical_resource_id)
+    request['ResourceProperties']['ReturnSecret'] = True
+    response = handler(request, {})
     assert response['Status'] == 'SUCCESS', response['Reason']
     assert 'PhysicalResourceId' in response
     assert 'Data' in response and 'Secret' in response['Data']
@@ -74,50 +74,50 @@ def test_update_name():
     assert physical_resource_id != physical_resource_id_2
 
     # delete the parameters
-    event = Event('Delete', name, physical_resource_id)
-    response = cfn_secret_provider.delete_secret(event, {})
+    request = Request('Delete', name, physical_resource_id)
+    response = handler(request, {})
     assert response['Status'] == 'SUCCESS', response['Reason']
 
-    event = Event('Delete', name, physical_resource_id_2)
-    response = cfn_secret_provider.delete_secret(event, {})
+    request = Request('Delete', name, physical_resource_id_2)
+    response = handler(request, {})
     assert response['Status'] == 'SUCCESS', response['Reason']
 
 
-def test_prevent_duplicate_through_update():
+def test_request_duplicate_through_update():
     # update parameter name
     name = '/test/parameter-%s' % uuid.uuid4()
-    event = Event('Create', name)
-    response = cfn_secret_provider.create_secret(event, {})
+    request = Request('Create', name)
+    response = handler(request, {})
     assert response['Status'] == 'SUCCESS', response['Reason']
     physical_resource_id = response['PhysicalResourceId']
 
     name_2 = '%s-2' % name
-    event = Event('Create', name_2)
-    response = cfn_secret_provider.update_secret(event, {})
+    request = Request('Create', name_2)
+    response = handler(request, {})
     assert response['Status'] == 'SUCCESS', response['Reason']
     assert 'PhysicalResourceId' in response
     physical_resource_id_2 = response['PhysicalResourceId']
 
-    event = Event('Update', name, physical_resource_id_2)
-    response = cfn_secret_provider.update_secret(event, {})
+    request = Request('Update', name, physical_resource_id_2)
+    response = handler(request, {})
     assert response['Status'] == 'FAILED', response['Reason']
 
     # delete the parameters
-    event = Event('Delete', name, physical_resource_id)
-    response = cfn_secret_provider.delete_secret(event, {})
+    request = Request('Delete', name, physical_resource_id)
+    response = handler(request, {})
     assert response['Status'] == 'SUCCESS', response['Reason']
 
-    event = Event('Delete', name, physical_resource_id_2)
-    response = cfn_secret_provider.delete_secret(event, {})
+    request = Request('Delete', name, physical_resource_id_2)
+    response = handler(request, {})
     assert response['Status'] == 'SUCCESS', response['Reason']
 
 
 def test_create_no_return_secret():
     # create a test parameter
     name = '/test/parameter-%s' % uuid.uuid4()
-    event = Event('Create', name)
-    event['ResourceProperties']['ReturnSecret'] = False
-    response = cfn_secret_provider.create_secret(event, {})
+    request = Request('Create', name)
+    request['ResourceProperties']['ReturnSecret'] = False
+    response = handler(request, {})
     assert response['Status'] == 'SUCCESS', response['Reason']
     assert 'PhysicalResourceId' in response
     physical_resource_id = response['PhysicalResourceId']
@@ -128,6 +128,6 @@ def test_create_no_return_secret():
     assert response['Data']['Arn'] == physical_resource_id
 
     # delete the parameters
-    event = Event('Delete', name, physical_resource_id)
-    response = cfn_secret_provider.delete_secret(event, {})
+    request = Request('Delete', name, physical_resource_id)
+    response = handler(request, {})
     assert response['Status'] == 'SUCCESS', response['Reason']

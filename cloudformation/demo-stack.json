@@ -2,7 +2,7 @@
   "AWSTemplateFormatVersion": "2010-09-09",
   "Resources": {
     "DBPassword": {
-      "Type": "Custom::SecretProvider",
+      "Type": "Custom::Secret",
       "Properties": {
         "Name": "/postgres/root/PGPASSWORD",
         "Alphabet": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_@#!",

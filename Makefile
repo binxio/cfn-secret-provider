@@ -73,7 +73,7 @@ test: venv
 	. ./venv/bin/activate && \
 	pip --quiet install -r test-requirements.txt && \
 	cd src && \
-	nosetests ../tests/*.py 
+	nosetests --verbosity=2  ../tests/*.py 
 
 autopep:
 	autopep8 --experimental --in-place --max-line-length 132 src/*.py tests/*.py

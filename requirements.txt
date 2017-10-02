@@ -1,2 +1,2 @@
 boto3
-cfn-resource
+requests
