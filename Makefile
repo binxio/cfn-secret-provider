@@ -50,9 +50,9 @@ do-push: deploy
 
 do-build: local-build
 
-local-build: src/cfn_secret_provider.py venv requirements.txt
+local-build: src/*.py venv requirements.txt
 	mkdir -p target/content 
-	pip --quiet install -t target/content -r requirements.txt
+	docker run -v $$PWD/target/content:/venv python:2.7 pip install --quiet -t /venv $$(<requirements.txt)
 	cp -r src/* target/content
 	find target/content -type d | xargs  chmod ugo+rx 
 	find target/content -type f | xargs  chmod ugo+r 
