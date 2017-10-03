@@ -143,7 +143,6 @@ class ResourceProvider(object):
         else:
             self.fail('ResourceType %s not supported by provider %s' %
                       (self.request['ResourceType'], self.custom_cfn_resource_name))
-        return self.response
 
     def handle(self, request, context):
         """
