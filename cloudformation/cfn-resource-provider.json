@@ -133,7 +133,7 @@
             ]
           ]
         },
-        "Handler": "cfn_secret_provider.handler",
+        "Handler": "secrets.handler",
         "MemorySize": 128,
         "Role": {
           "Fn::GetAtt": [ "LambdaRole", "Arn" ]
