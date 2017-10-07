@@ -25,28 +25,28 @@
           ]
         }
       }
-    }
-  },
-  "PrivateKey": {
-    "Type": "Custom::RSAKey",
-    "Properties": {
-      "Name": "/demo/sshkey",
-      "ReturnSecret": true,
-      "Version": "v1",
-      "ServiceToken": {
-        "Fn::Join": [
-          ":",
-          [
-            "arn:aws:lambda",
-            {
-              "Ref": "AWS::Region"
-            },
-            {
-              "Ref": "AWS::AccountId"
-            },
-            "function:binxio-cfn-secret-provider"
-          ]
-        ]
+    },
+    "PrivateKey": {
+      "Type": "Custom::RSAKey",
+      "Properties": {
+	"Name": "/demo/sshkey",
+	"ReturnSecret": true,
+	"Version": "v1",
+	"ServiceToken": {
+	  "Fn::Join": [
+	    ":",
+	    [
+	      "arn:aws:lambda",
+	      {
+		"Ref": "AWS::Region"
+	      },
+	      {
+		"Ref": "AWS::AccountId"
+	      },
+	      "function:binxio-cfn-secret-provider"
+	    ]
+	  ]
+	}
       }
     }
   },
