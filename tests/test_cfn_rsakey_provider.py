@@ -16,11 +16,13 @@ def test_defaults():
 
 def test_create():
     # create a test parameter
+    provider = RSAKeyProvider()
     name = '/test/parameter-%s' % uuid.uuid4()
     request = Request('Create', name)
     request['ResourceProperties']['ReturnSecret'] = True
-    response = handler(request, {})
+    response = provider.handle(request, {})
     assert response['Status'] == 'SUCCESS', response['Reason']
+    assert provider.is_valid_cfn_response(), response['Reason']
     assert 'PhysicalResourceId' in response
     physical_resource_id = response['PhysicalResourceId']
 

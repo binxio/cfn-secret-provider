@@ -74,7 +74,7 @@ class RSAKeyProvider(ResourceProvider):
 
             self.physical_resource_id = self.arn
         except ClientError as e:
-            self.set_physical_resource_id = 'could-not-create'
+            self.physical_resource_id = 'could-not-create'
             self.fail(str(e))
 
     def create(self):

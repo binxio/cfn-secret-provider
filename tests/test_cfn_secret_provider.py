@@ -41,6 +41,7 @@ def test_create():
     assert response['Status'] == 'SUCCESS', response['Reason']
     assert 'PhysicalResourceId' in response
     physical_resource_id = response['PhysicalResourceId']
+    assert isinstance(physical_resource_id, str)
 
     assert 'Data' in response
     assert 'Secret' in response['Data']
