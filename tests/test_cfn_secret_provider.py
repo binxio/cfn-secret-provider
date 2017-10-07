@@ -31,6 +31,13 @@ def test_type_convert():
     r.set_request(request, {})
     assert not r.is_valid_request()
 
+    request['ResourceProperties']['Length'] = u'62'
+    request['ResourceProperties']['ReturnSecret'] = u'true'
+    r.set_request(request, {})
+    assert r.is_valid_request()
+    assert r.get('Length') == 62
+    assert r.get('ReturnSecret')
+
 
 def test_create():
     # create a test parameter

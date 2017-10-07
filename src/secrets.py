@@ -1,5 +1,10 @@
+import os
+import logging
 import cfn_secret_provider
 import cfn_rsakey_provider
+
+logging.basicConfig(level=os.getenv('LOG_LEVEL', 'INFO'))
+log = logging.getLogger()
 
 
 def handler(request, context):
