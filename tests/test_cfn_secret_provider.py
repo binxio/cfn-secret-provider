@@ -16,6 +16,22 @@ def test_defaults():
     assert r.get('Description') == ''
 
 
+def test_type_convert():
+    request = Request('Create', 'abc')
+    request['ResourceProperties']['Length'] = '62'
+    request['ResourceProperties']['ReturnSecret'] = 'true'
+    r = SecretProvider()
+    r.set_request(request, {})
+    assert r.is_valid_request()
+    assert r.get('Length') == 62
+    assert r.get('ReturnSecret')
+
+    request['ResourceProperties']['Length'] = 'fouteboole62'
+    r = SecretProvider()
+    r.set_request(request, {})
+    assert not r.is_valid_request()
+
+
 def test_create():
     # create a test parameter
     name = '/test/1-parameter-%s' % uuid.uuid4()

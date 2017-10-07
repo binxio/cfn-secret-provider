@@ -46,6 +46,15 @@ class SecretProvider(ResourceProvider):
         self.region = boto3.session.Session().region_name
         self.account_id = (boto3.client('sts')).get_caller_identity()['Account']
 
+    def convert_property_types(self):
+        try:
+            if 'Length' in self.properties and isinstance(self.properties['Length'], str):
+                self.properties['Length'] = int(self.properties['Length'])
+            if 'ReturnSecret' in self.properties and isinstance(self.properties['ReturnSecret'], str):
+                self.properties['ReturnSecret'] = (self.properties['ReturnSecret'] == 'true')
+        except ValueError as e:
+            log.error('failed to convert property types %s', e)
+
     @property
     def allow_overwrite(self):
         return self.physical_resource_id == self.arn
