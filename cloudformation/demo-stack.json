@@ -4,7 +4,7 @@
     "DBPassword": {
       "Type": "Custom::Secret",
       "Properties": {
-        "Name": "/postgres/root/PGPASSWORD",
+        "Name": "/demo/PGPASSWORD",
         "Alphabet": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_@#!",
         "Length": 30,
         "ReturnSecret": true,
@@ -27,6 +27,29 @@
       }
     }
   },
+  "PrivateKey": {
+    "Type": "Custom::RSAKey",
+    "Properties": {
+      "Name": "/demo/sshkey",
+      "ReturnSecret": true,
+      "Version": "v1",
+      "ServiceToken": {
+        "Fn::Join": [
+          ":",
+          [
+            "arn:aws:lambda",
+            {
+              "Ref": "AWS::Region"
+            },
+            {
+              "Ref": "AWS::AccountId"
+            },
+            "function:binxio-cfn-secret-provider"
+          ]
+        ]
+      }
+    }
+  },
   "Outputs": {
     "Secret": {
       "Value": {
@@ -44,7 +67,34 @@
           "Arn"
         ]
       },
-      "Description": "ARN of the parameter in the Store"
+      "Description": "ARN of the password in the Parameter Store"
+    },
+    "PrivateKey": {
+      "Value": {
+        "Fn::GetAtt": [
+          "PrivateKey",
+          "Secret"
+        ]
+      },
+      "Description": "the rsa private key generated, do expose this as Output Parameter in production"
+    },
+    "PublicKey": {
+      "Value": {
+        "Fn::GetAtt": [
+          "PrivateKey",
+          "PublicKey"
+        ]
+      },
+      "Description": "the public key, safe to expose"
+    },
+    "PrivateKeyArn": {
+      "Value": {
+        "Fn::GetAtt": [
+          "PrivateKey",
+          "Arn"
+        ]
+      },
+      "Description": "ARN of the private key in the Parameter Store"
     }
   }
 }
