@@ -41,6 +41,13 @@ class RSAKeyProvider(ResourceProvider):
         self.region = boto3.session.Session().region_name
         self.account_id = (boto3.client('sts')).get_caller_identity()['Account']
 
+    def convert_property_types(self):
+        try:
+            if 'ReturnSecret' in self.properties and isinstance(self.properties['ReturnSecret'], (str, unicode,)):
+                self.properties['ReturnSecret'] = (self.properties['ReturnSecret'] == 'true')
+        except ValueError as e:
+            log.error('failed to convert property types %s', e)
+
     @property
     def allow_overwrite(self):
         return self.physical_resource_id == self.arn

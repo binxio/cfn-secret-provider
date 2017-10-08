@@ -56,7 +56,7 @@ local-build: src/*.py venv requirements.txt
 	cp -r src/* target/content
 	find target/content -type d | xargs  chmod ugo+rx 
 	find target/content -type f | xargs  chmod ugo+r 
-	cd target/content && zip --quiet -9r ../../target/$(NAME)-$(VERSION).zip  *
+	cd target/content && zip --quiet -9r ../../target/$(NAME)-$(VERSION).zip  .
 	chmod ugo+r target/$(NAME)-$(VERSION).zip
 
 venv: requirements.txt
