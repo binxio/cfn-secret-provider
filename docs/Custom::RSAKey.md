@@ -1,4 +1,4 @@
-# Custom::Secret
+# Custom::RSAKey
 The `Custom::RSAKey` resource creates a private RSA key in the Parameter Store.
 An existing parameter in the Parameter Store will not be overwritten.
 
