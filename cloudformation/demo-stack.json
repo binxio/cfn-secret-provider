@@ -29,7 +29,7 @@
     "PrivateKey": {
       "Type": "Custom::RSAKey",
       "Properties": {
-	"Name": "/demo/sshkey",
+	"Name": "/demo/private-key",
 	"Version": "v1",
 	"ServiceToken": {
 	  "Fn::Join": [
@@ -52,7 +52,7 @@
       "Type": "Custom::KeyPair",
       "DependsOn": "PrivateKey",
       "Properties": {
-	"Name": "CustomKeyPairName",
+	"Name": "CustomKeyPair",
 	"PublicKeyMaterial": {
 		"Fn::GetAtt": [ "PrivateKey", "PublicKey" ]
 	},

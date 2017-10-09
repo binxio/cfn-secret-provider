@@ -94,9 +94,9 @@ aws cloudformation wait stack-create-complete  --stack-name cfn-secret-provider-
 to validate the result, type:
 
 ```sh
-aws ssm get-parameter --name /demo/PGPASSWORD 
-aws ssm get-parameter --name /demo/private-key 
-aws ec2 --output text describe-key-pairs --key-names CustomKeyPair
+aws ssm get-parameter --name /demo/PGPASSWORD --with-decryption
+aws ssm get-parameter --name /demo/private-key  --with-decryption
+aws ec2 --output text describe-key-pairs --key-names CustomKeyPair 
 ```
 
 ## Conclusion
