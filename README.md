@@ -14,7 +14,7 @@ It is quite easy: you specify a CloudFormation resource of the [Custom::Secret](
     "DBPassword": {
       "Type": "Custom::Secret",
       "Properties": {
-        "Name": "/postgres/root/PGPASSWORD",
+        "Name": "/demo/PGPASSWORD",
         "KeyAlias": "alias/aws/ssm",
         "Alphabet": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
         "Length": 30,
@@ -25,7 +25,7 @@ It is quite easy: you specify a CloudFormation resource of the [Custom::Secret](
     }
   }
 ```
-After the deployment, a 30 character random string can be found in the EC Parameter Store with the name `/postgres/root/PGPASSWORD`.
+After the deployment, a 30 character random string can be found in the EC Parameter Store with the name `/demo/PGPASSWORD`.
 
 If you need to access the secret in your cloudformation module, you need to specify `ReturnSecret` and reference it as the attribute `Secret`.
 
@@ -41,7 +41,7 @@ In the same manner you can specify a RSA private key as a CloudFormation resourc
     "PrivateKey": {
       "Type": "Custom::RSAKey",
       "Properties": {
-        "Name": "/rsa/private-key",
+        "Name": "/demo/private-key",
         "KeyAlias": "alias/aws/ssm",
         "ServiceToken": { "Fn::Join": [ ":", [ "arn:aws:lambda", { "Ref": "AWS::Region" }, { "Ref": "AWS::AccountId" }, "function:binxio-cfn-secret-provider" ] ]
         }
@@ -49,7 +49,7 @@ In the same manner you can specify a RSA private key as a CloudFormation resourc
     }
   }
 ```
-After the deployment, a the newly generated private key can be found in the EC2 Parameter Store with the name `/rsa/private-key`.
+After the deployment, a the newly generated private key can be found in the EC2 Parameter Store with the name `/demo/private-key`.
 
 If you need to access the public key of the newly generated private key, you can reference it as the attribute `PublicKey`.  Most likely, 
 you would use this in the [Custom::KeyPair}(docs/Custom%3A%3AKeyPair.md) resource, to create a EC2 key pair:
@@ -57,7 +57,7 @@ you would use this in the [Custom::KeyPair}(docs/Custom%3A%3AKeyPair.md) resourc
 ```json
     "KeyPair": {
       "Type": "Custom::KeyPair",
-      "DependsOn": "PrivateKey",
+      "DependsOn": "CustomPrivateKey",
       "Properties": {
         "Name": "CustomKeyPair",
         "PublicKeyMaterial": { "Fn::GetAtt": [ "PrivateKey", "PublicKey" ] },
@@ -96,7 +96,7 @@ to validate the result, type:
 ```sh
 aws ssm get-parameter --name /demo/PGPASSWORD 
 aws ssm get-parameter --name /demo/private-key 
-
+aws ec2 --output text describe-key-pairs --key-names CustomKeyPair
 ```
 
 ## Conclusion
