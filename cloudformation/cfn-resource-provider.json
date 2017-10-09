@@ -37,7 +37,9 @@
               "Action": [
                 "ssm:PutParameter",
                 "ssm:GetParameter",
-                "ssm:DeleteParameter"
+                "ssm:DeleteParameter",
+                "ec2:ImportKeyPair",
+                "ec2:DeleteKeyPair"
               ],
               "Resource": [
                 "*"
