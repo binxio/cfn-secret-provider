@@ -30,7 +30,6 @@
       "Type": "Custom::RSAKey",
       "Properties": {
 	"Name": "/demo/sshkey",
-	"ReturnSecret": true,
 	"Version": "v1",
 	"ServiceToken": {
 	  "Fn::Join": [
@@ -93,15 +92,6 @@
         ]
       },
       "Description": "ARN of the password in the Parameter Store"
-    },
-    "PrivateKey": {
-      "Value": {
-        "Fn::GetAtt": [
-          "PrivateKey",
-          "Secret"
-        ]
-      },
-      "Description": "the rsa private key generated, do expose this as Output Parameter in production"
     },
     "PublicKey": {
       "Value": {

@@ -99,9 +99,11 @@ delete-provider:
 	aws cloudformation wait stack-delete-complete  --stack-name $(NAME)
 
 demo: 
-	aws cloudformation create-stack --stack-name $(NAME)-demo \
-		--template-body file://cloudformation/demo-stack.json  
-	aws cloudformation wait stack-create-complete  --stack-name $(NAME)-demo
+	COMMAND=$(shell if aws cloudformation get-template-summary --stack-name $(NAME) >/dev/null 2>&1; then \
+			echo update; else echo create; fi) ; \
+	aws cloudformation $$COMMAND-stack --stack-name $(NAME)-demo \
+		--template-body file://cloudformation/demo-stack.json ; \
+	aws cloudformation wait stack-$$COMMAND-complete  --stack-name $(NAME)-demo
 
 delete-demo:
 	aws cloudformation delete-stack --stack-name $(NAME)-demo 

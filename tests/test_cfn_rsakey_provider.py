@@ -9,7 +9,6 @@ def test_defaults():
     r = RSAKeyProvider()
     r.set_request(request, {})
     assert r.is_valid_request()
-    assert not r.get('ReturnSecret')
     assert r.get('KeyAlias') == 'alias/aws/ssm'
     assert r.get('Description') == ''
 
@@ -19,7 +18,6 @@ def test_create():
     provider = RSAKeyProvider()
     name = '/test/parameter-%s' % uuid.uuid4()
     request = Request('Create', name)
-    request['ResourceProperties']['ReturnSecret'] = True
     response = provider.handle(request, {})
     assert response['Status'] == 'SUCCESS', response['Reason']
     assert provider.is_valid_cfn_response(), response['Reason']
@@ -27,7 +25,6 @@ def test_create():
     physical_resource_id = response['PhysicalResourceId']
 
     assert 'Data' in response
-    assert 'Secret' in response['Data']
     assert 'Arn' in response['Data']
     assert 'PublicKey' in response['Data']
     assert response['Data']['Arn'] == physical_resource_id
@@ -67,11 +64,10 @@ def test_update_name():
 
     name_2 = '%s-2' % name
     request = Request('Update', name_2, physical_resource_id)
-    request['ResourceProperties']['ReturnSecret'] = True
     response = handler(request, {})
     assert response['Status'] == 'SUCCESS', response['Reason']
     assert 'PhysicalResourceId' in response
-    assert 'Data' in response and 'Secret' in response['Data']
+    assert 'Data' in response and 'Arn' in response['Data']
 
     physical_resource_id_2 = response['PhysicalResourceId']
     assert physical_resource_id != physical_resource_id_2
@@ -119,14 +115,12 @@ def test_create_no_return_secret():
     # create a test parameter
     name = '/test/parameter-%s' % uuid.uuid4()
     request = Request('Create', name)
-    request['ResourceProperties']['ReturnSecret'] = False
     response = handler(request, {})
     assert response['Status'] == 'SUCCESS', response['Reason']
     assert 'PhysicalResourceId' in response
     physical_resource_id = response['PhysicalResourceId']
 
     assert 'Data' in response
-    assert 'Secret' not in response['Data']
     assert 'Arn' in response['Data']
     assert response['Data']['Arn'] == physical_resource_id
 

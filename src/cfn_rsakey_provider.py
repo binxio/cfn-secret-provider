@@ -21,9 +21,6 @@ request_schema = {
                  "description": "the name of the private key in the parameters store"},
         "Description": {"type": "string", "default": "",
                         "description": "the description of the key in the parameter store"},
-        "ReturnSecret": {"type": "boolean",
-                         "default": False,
-                         "description": "return key as attribute 'Secret'"},
         "KeyAlias": {"type": "string",
                      "default": "alias/aws/ssm",
                      "description": "KMS key to use to encrypt the key"}
@@ -40,13 +37,6 @@ class RSAKeyProvider(ResourceProvider):
         self.iam = boto3.client('iam')
         self.region = boto3.session.Session().region_name
         self.account_id = (boto3.client('sts')).get_caller_identity()['Account']
-
-    def convert_property_types(self):
-        try:
-            if 'ReturnSecret' in self.properties and isinstance(self.properties['ReturnSecret'], (str, unicode,)):
-                self.properties['ReturnSecret'] = (self.properties['ReturnSecret'] == 'true')
-        except ValueError as e:
-            log.error('failed to convert property types %s', e)
 
     @property
     def allow_overwrite(self):

@@ -1,12 +1,12 @@
 # cfn-secret-provider
-A CloudFormation custom resource provider for managing secrets
+A CloudFormation custom resource provider for managing secrets, private keys and EC2 key pairs.
 
 One of the biggest problems I encounter in creating immutable infrastructures, is dealing with secrets. Secrets must always be different per
 environment and therefore parameterized. As we automated all the things passwords often end up in parameter files and have to pass them around 
 to people and applications: This is not a good thing. With this Custom CloudFormation Resource we put an end to that. Secrets are generated, 
 stored in the EC2 parameter store and access to the secrets can be controlled through security policies.
 
-## How does it work?
+## How do I generate a secret?
 It is quite easy: you specify a CloudFormation resource of the [Custom::Secret](docs/Custom%3A%3ASecret.md), as follows:
 
 ```json
@@ -25,7 +25,7 @@ It is quite easy: you specify a CloudFormation resource of the [Custom::Secret](
     }
   }
 ```
-After the deployment, a 30 character random string can be found in the EC Parameter Store with the name `/test-api/postgres/root/PGPASSWORD`.
+After the deployment, a 30 character random string can be found in the EC Parameter Store with the name `/postgres/root/PGPASSWORD`.
 
 If you need to access the secret in your cloudformation module, you need to specify `ReturnSecret` and reference it as the attribute `Secret`.
 
@@ -33,8 +33,42 @@ If you need to access the secret in your cloudformation module, you need to spec
         "MasterUserPassword": { "Fn::GetAtt": [ "DBPassword", "Secret" ]}
 ```
 
+## How do I add a private key?
+In the same manner you can specify a RSA private key as a CloudFormation resource of the [Custom::RSAKey](docs/Custom%3A%3ARSAKey.md):
+
+```json
+  "Resources": {
+    "PrivateKey": {
+      "Type": "Custom::RSAKey",
+      "Properties": {
+        "Name": "/rsa/private-key",
+        "KeyAlias": "alias/aws/ssm",
+        "ServiceToken": { "Fn::Join": [ ":", [ "arn:aws:lambda", { "Ref": "AWS::Region" }, { "Ref": "AWS::AccountId" }, "function:binxio-cfn-secret-provider" ] ]
+        }
+      }
+    }
+  }
+```
+After the deployment, a the newly generated private key can be found in the EC2 Parameter Store with the name `/rsa/private-key`.
+
+If you need to access the public key of the newly generated private key, you reference it as the attribute `PublicKey`.  Most likely, 
+you would combine this with the [Custom::KeyPair}(docs/Custom%3A%3AKeyPair.md) resource, to create a EC2 key pair:
+
+```json
+    "KeyPair": {
+      "Type": "Custom::KeyPair",
+      "DependsOn": "PrivateKey",
+      "Properties": {
+        "Name": "CustomKeyPair",
+        "PublicKeyMaterial": { "Fn::GetAtt": [ "PrivateKey", "PublicKey" ] },
+        "ServiceToken": { "Fn::Join": [ ":", [ "arn:aws:lambda", { "Ref": "AWS::Region" }, { "Ref": "AWS::AccountId" }, "function:binxio-cfn-secret-provider" ] ] }
+      }
+```
+This will create the ec2 key pair for you named `CustomKeyPair`, based on the generated private key
+
+
 ## Installation
-To install this Custom Resource, type:
+To install these custom resources, type:
 
 ```sh
 aws cloudformation create-stack \
