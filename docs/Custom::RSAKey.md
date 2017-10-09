@@ -12,7 +12,7 @@ To declare this entity in your AWS CloudFormation template, use the following sy
     "Name" : String,
     "KeyAlias" : String,
     "ServiceToken" : String,
-    "ReturnSecret": Bool,
+    "Description": String,
     "Version": String
   }
 }
@@ -23,7 +23,7 @@ You can specify the following properties:
 
 - `Name`  - the name of the key in the Parameter Store (required)
 - `KeyAlias`  - to use to encrypt the key (default `alias/aws/ssm`)
-- `ReturnSecret`  - as an attribute. (Default 'false')
+- `Description`  - for the parameter in the store. (Default '')
 - `ServiceToken`  - ARN pointing to the lambda function implementing this resource 
 - `Version`  - an opaque string to enforce the generation of a new secret.
 

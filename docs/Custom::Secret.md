@@ -11,6 +11,7 @@ To declare this entity in your AWS CloudFormation template, use the following sy
   "Type" : "Custom::Secret",
   "Properties" : {
     "Name" : String,
+    "Description" : String,
     "Alphabet" : String,
     "Length" : Integer,
     "KeyAlias" : String,
@@ -25,6 +26,7 @@ To declare this entity in your AWS CloudFormation template, use the following sy
 You can specify the following properties:
 
 - `Name`  - the name of the parameter in the Parameter Store (required)
+- `Description`  - for the parameter in the store. (Default '')
 - `Alphabet` - the alphabet of characters from which to generate a secret (defaults to ASCII letters, digits and punctuation characters)
 - `Length`  - the length of the secret (default `30`)
 - `KeyAlias`  - to use to encrypt the string (default `alias/aws/ssm`)

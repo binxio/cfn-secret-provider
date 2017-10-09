@@ -62,12 +62,20 @@ class RSAKeyProvider(ResourceProvider):
                 crypto_serialization.Encoding.OpenSSH,
                 crypto_serialization.PublicFormat.OpenSSH
             )
-            self.ssm.put_parameter(Name=self.get('Name'), KeyId=self.get('KeyAlias'),
-                                   Type='SecureString', Overwrite=self.allow_overwrite, Value=private_key)
+            kwargs = {
+                'Name': self.get('Name'),
+                'KeyId': self.get('KeyAlias'),
+                'Type': 'SecureString',
+                'Overwrite': self.allow_overwrite,
+                'Value': private_key
+            }
+            if self.get('Description') != '':
+                kwargs['Description'] = self.get('Description')
+
+            self.ssm.put_parameter(**kwargs)
+
             self.set_attribute('Arn', self.arn)
             self.set_attribute('PublicKey', public_key)
-            if self.get('ReturnSecret'):
-                self.set_attribute('Secret', private_key)
 
             self.physical_resource_id = self.arn
         except ClientError as e:

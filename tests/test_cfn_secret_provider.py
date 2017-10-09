@@ -44,6 +44,7 @@ def test_create():
     name = '/test/1-parameter-%s' % uuid.uuid4()
     request = Request('Create', name)
     request['ResourceProperties']['ReturnSecret'] = True
+    request['ResourceProperties']['Description'] = 'A beautiful secret'
     response = handler(request, {})
     assert response['Status'] == 'SUCCESS', response['Reason']
     assert 'PhysicalResourceId' in response

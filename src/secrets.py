@@ -6,6 +6,7 @@ import cfn_keypair_provider
 
 logging.basicConfig(level=os.getenv('LOG_LEVEL', 'INFO'))
 
+
 def handler(request, context):
     if request['ResourceType'] == 'Custom::RSAKey':
         return cfn_rsakey_provider.handler(request, context)

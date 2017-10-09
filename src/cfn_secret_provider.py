@@ -65,12 +65,21 @@ class SecretProvider(ResourceProvider):
 
     def create_or_update_secret(self):
         try:
-            value = "".join(choice(self.get('Alphabet')) for x in range(0, self.get('Length')))
-            self.ssm.put_parameter(Name=self.get('Name'), KeyId=self.get('KeyAlias'),
-                                   Type='SecureString', Overwrite=self.allow_overwrite, Value=value)
+            kwargs = {
+                'Name': self.get('Name'),
+                'KeyId': self.get('KeyAlias'),
+                'Type': 'SecureString',
+                'Overwrite': self.allow_overwrite,
+                'Value': "".join(choice(self.get('Alphabet')) for x in range(0, self.get('Length'))),
+            }
+            if self.get('Description') != '':
+                kwargs['Description'] = self.get('Description')
+
+            self.ssm.put_parameter(**kwargs)
+
             self.set_attribute('Arn', self.arn)
             if self.get('ReturnSecret'):
-                self.set_attribute('Secret', value)
+                self.set_attribute('Secret', kwargs['Value'])
 
             self.physical_resource_id = self.arn
         except ClientError as e:

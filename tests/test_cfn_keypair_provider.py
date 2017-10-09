@@ -178,7 +178,8 @@ class KeyPair(object):
 
 class Request(dict):
 
-    def __init__(self, request_type, name, physical_resource_id=str(uuid.uuid4()), public_key_material=KeyPair().public_key_material):
+    def __init__(self, request_type, name, physical_resource_id=str(uuid.uuid4()),
+                 public_key_material=KeyPair().public_key_material):
         self.update({
             'RequestType': request_type,
             'ResponseURL': 'https://httpbin.org/put',

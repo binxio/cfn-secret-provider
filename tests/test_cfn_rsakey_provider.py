@@ -18,6 +18,7 @@ def test_create():
     provider = RSAKeyProvider()
     name = '/test/parameter-%s' % uuid.uuid4()
     request = Request('Create', name)
+    request['ResourceProperties']['Description'] = 'A ppretty private key'
     response = provider.handle(request, {})
     assert response['Status'] == 'SUCCESS', response['Reason']
     assert provider.is_valid_cfn_response(), response['Reason']
