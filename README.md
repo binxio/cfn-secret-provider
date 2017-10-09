@@ -51,8 +51,8 @@ In the same manner you can specify a RSA private key as a CloudFormation resourc
 ```
 After the deployment, a the newly generated private key can be found in the EC2 Parameter Store with the name `/rsa/private-key`.
 
-If you need to access the public key of the newly generated private key, you reference it as the attribute `PublicKey`.  Most likely, 
-you would combine this with the [Custom::KeyPair}(docs/Custom%3A%3AKeyPair.md) resource, to create a EC2 key pair:
+If you need to access the public key of the newly generated private key, you can reference it as the attribute `PublicKey`.  Most likely, 
+you would use this in the [Custom::KeyPair}(docs/Custom%3A%3AKeyPair.md) resource, to create a EC2 key pair:
 
 ```json
     "KeyPair": {
@@ -64,7 +64,7 @@ you would combine this with the [Custom::KeyPair}(docs/Custom%3A%3AKeyPair.md) r
         "ServiceToken": { "Fn::Join": [ ":", [ "arn:aws:lambda", { "Ref": "AWS::Region" }, { "Ref": "AWS::AccountId" }, "function:binxio-cfn-secret-provider" ] ] }
       }
 ```
-This will create the ec2 key pair for you named `CustomKeyPair`, based on the generated private key
+This will create the ec2 key pair for you named `CustomKeyPair`, based on the generated private key. Now private key is securely stored in the EC2 Parameter Store and the public key can be used to gain access to specific EC2 instances. See [Amazon EC2 Key Pairs](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html) for more information.
 
 
 ## Installation
@@ -94,7 +94,9 @@ aws cloudformation wait stack-create-complete  --stack-name cfn-secret-provider-
 to validate the result, type:
 
 ```sh
-aws ssm get-parameter --name /prod/postgres/root/PGPASSWORD 
+aws ssm get-parameter --name /demo/PGPASSWORD 
+aws ssm get-parameter --name /demo/private-key 
+
 ```
 
 ## Conclusion
