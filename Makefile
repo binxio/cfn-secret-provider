@@ -78,28 +78,21 @@ test: venv
 autopep:
 	autopep8 --experimental --in-place --max-line-length 132 src/*.py tests/*.py
 
-deploy-provider:
-	EXISTS=$$(aws cloudformation get-template-summary --stack-name $(NAME) 2>/dev/null) ; \
-	if [[ -z $$EXISTS ]] ; then \
-		aws cloudformation create-stack \
-			--capabilities CAPABILITY_IAM \
-			--stack-name $(NAME) \
-			--template-body file://cloudformation/cfn-resource-provider.json ; \
-		aws cloudformation wait stack-create-complete  --stack-name $(NAME) ; \
-	else \
-		aws cloudformation update-stack \
-			--capabilities CAPABILITY_IAM \
-			--stack-name $(NAME) \
-			--template-body file://cloudformation/cfn-resource-provider.json ; \
-		aws cloudformation wait stack-update-complete  --stack-name $(NAME) ; \
-	fi
+deploy-provider: 
+	COMMAND=$(shell if aws cloudformation get-template-summary --stack-name $(NAME) >/dev/null 2>&1; then \
+			echo update; else echo create; fi) ; \
+	aws cloudformation $$COMMAND-stack \
+		--capabilities CAPABILITY_IAM \
+		--stack-name $(NAME) \
+		--template-body file://cloudformation/cfn-resource-provider.json ; \
+	aws cloudformation wait stack-$$COMMAND-complete  --stack-name $(NAME) 
 
 delete-provider:
 	aws cloudformation delete-stack --stack-name $(NAME)
 	aws cloudformation wait stack-delete-complete  --stack-name $(NAME)
 
 demo: 
-	COMMAND=$(shell if aws cloudformation get-template-summary --stack-name $(NAME) >/dev/null 2>&1; then \
+	COMMAND=$(shell if aws cloudformation get-template-summary --stack-name $(NAME)-demo >/dev/null 2>&1; then \
 			echo update; else echo create; fi) ; \
 	aws cloudformation $$COMMAND-stack --stack-name $(NAME)-demo \
 		--template-body file://cloudformation/demo-stack.json ; \

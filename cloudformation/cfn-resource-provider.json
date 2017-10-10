@@ -8,7 +8,7 @@
     },
     "CFNSecretProviderZipFileName": {
       "Type": "String",
-      "Default": "lambdas/cfn-secret-provider-latest.zip"
+      "Default": "lambdas/cfn-secret-provider-0.6.4.zip"
     }
   },
   "Conditions": {
@@ -64,7 +64,9 @@
           ]
         },
         "Roles": [
-            { "Ref": "LambdaRole" }
+          {
+            "Ref": "LambdaRole"
+          }
         ]
       }
     },
@@ -138,7 +140,10 @@
         "Handler": "secrets.handler",
         "MemorySize": 128,
         "Role": {
-          "Fn::GetAtt": [ "LambdaRole", "Arn" ]
+          "Fn::GetAtt": [
+            "LambdaRole",
+            "Arn"
+          ]
         },
         "Runtime": "python2.7"
       }
