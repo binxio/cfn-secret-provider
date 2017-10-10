@@ -30,7 +30,6 @@ You can specify the following properties:
 ## Return values
 With 'Fn::GetAtt' the following values are available:
 
-- `Secret` - the generated secret value, if `ReturnSecret` was set to true.
 - `PublicKey` - the public key of the generated key pair
 - `Arn` - the AWS Resource name of the parameter
 
