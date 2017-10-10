@@ -103,7 +103,7 @@ tag: TAG=$(shell . $(RELEASE_SUPPORT); getTag $(VERSION))
 tag: check-status
 	@. $(RELEASE_SUPPORT) ; ! tagExists $(TAG) || (echo "ERROR: tag $(TAG) for version $(VERSION) already tagged in git" >&2 && exit 1) ;
 	@. $(RELEASE_SUPPORT) ; setRelease $(VERSION)
-	git add .release
+	git add .
 	git commit -m "bumped to version $(VERSION)" ;
 	git tag $(TAG) ;
 	@if [ -n "$(shell git remote -v)" ] ; then git push --tags ; fi
