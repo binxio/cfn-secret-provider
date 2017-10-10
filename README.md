@@ -52,7 +52,7 @@ In the same manner you can specify a RSA private key as a CloudFormation resourc
 After the deployment, a the newly generated private key can be found in the EC2 Parameter Store with the name `/demo/private-key`.
 
 If you need to access the public key of the newly generated private key, you can reference it as the attribute `PublicKey`.  Most likely, 
-you would use this in the [Custom::KeyPair}(docs/Custom%3A%3AKeyPair.md) resource, to create a EC2 key pair:
+you would use this in the [Custom::KeyPair](docs/Custom%3A%3AKeyPair.md) resource, to create a EC2 key pair:
 
 ```json
     "KeyPair": {
