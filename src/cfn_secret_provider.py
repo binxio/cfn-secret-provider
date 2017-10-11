@@ -1,9 +1,10 @@
-import boto3
-import hashlib
-import logging
+import os
+import re
 import time
 import string
-import os
+import hashlib
+import logging
+import boto3
 from random import choice
 from botocore.exceptions import ClientError
 from cfn_resource_provider import ResourceProvider
@@ -23,6 +24,8 @@ request_schema = {
                 "Alphabet": {"type": "string",
                              "default": "abcdfghijklmnopqrstuvwyxzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_",
                              "description": "the characters from which to generate the secret"},
+                "RefreshOnUpdate": {"type": "boolean", "default": False,
+                                    "description": "generate a new secret on update"},
                 "ReturnSecret": {"type": "boolean",
                                  "default": False,
                                  "description": "return secret as attribute 'Secret'"},
@@ -31,7 +34,8 @@ request_schema = {
                              "description": "KMS key to use to encrypt the value"},
                 "Length": {"type": "integer",  "minimum": 1, "maximum": 512,
                            "default": 30,
-                           "description": "length of the secret"}
+                           "description": "length of the secret"},
+                "Version": {"type": "string",  "description": "opaque string to force update"}
             }
 }
 
@@ -52,6 +56,8 @@ class SecretProvider(ResourceProvider):
                 self.properties['Length'] = int(self.properties['Length'])
             if 'ReturnSecret' in self.properties and isinstance(self.properties['ReturnSecret'], (str, unicode,)):
                 self.properties['ReturnSecret'] = (self.properties['ReturnSecret'] == 'true')
+            if 'RefreshOnUpdate' in self.properties and isinstance(self.properties['RefreshOnUpdate'], (str, unicode,)):
+                self.properties['RefreshOnUpdate'] = (self.properties['RefreshOnUpdate'] == 'true')
         except ValueError as e:
             log.error('failed to convert property types %s', e)
 
@@ -59,21 +65,34 @@ class SecretProvider(ResourceProvider):
     def allow_overwrite(self):
         return self.physical_resource_id == self.arn
 
+    def name_from_physical_resource_id(self):
+        """
+        returns the name from the physical_resource_id as returned by self.arn, or None
+        """
+        arn_regexp = re.compile(r'arn:aws:ssm:(?P<region>[^:]*):(?P<account>[^:]*):parameter/(?P<name>.*)')
+        m = re.match(arn_regexp, self.physical_resource_id)
+        return m.group('name') if m is not None else None
+
     @property
     def arn(self):
         return 'arn:aws:ssm:%s:%s:parameter/%s' % (self.region, self.account_id, self.get('Name'))
 
-    def create_or_update_secret(self):
+    def put_parameter(self, overwrite=False, new_secret=True):
         try:
             kwargs = {
                 'Name': self.get('Name'),
                 'KeyId': self.get('KeyAlias'),
                 'Type': 'SecureString',
-                'Overwrite': self.allow_overwrite,
-                'Value': "".join(choice(self.get('Alphabet')) for x in range(0, self.get('Length'))),
+                'Overwrite': overwrite
             }
+
             if self.get('Description') != '':
                 kwargs['Description'] = self.get('Description')
+
+            if new_secret:
+                kwargs['Value'] = "".join(choice(self.get('Alphabet')) for x in range(0, self.get('Length')))
+            else:
+                kwargs['Value'] = self.get_secret()
 
             self.ssm.put_parameter(**kwargs)
 
@@ -86,11 +105,15 @@ class SecretProvider(ResourceProvider):
             self.physical_resource_id = 'could-not-create'
             self.fail(str(e))
 
+    def get_secret(self):
+        response = self.ssm.get_parameter(Name=self.name_from_physical_resource_id(), WithDecryption=True)
+        return response['Parameter']['Value']
+
     def create(self):
-        self.create_or_update_secret()
+        self.put_parameter(overwrite=False, new_secret=True)
 
     def update(self):
-        self.create_or_update_secret()
+        self.put_parameter(overwrite=(self.physical_resource_id == self.arn), new_secret=self.get('RefreshOnUpdate'))
 
     def delete(self):
         name = self.physical_resource_id.split('/', 1)

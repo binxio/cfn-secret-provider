@@ -13,6 +13,7 @@ To declare this entity in your AWS CloudFormation template, use the following sy
     "KeyAlias" : String,
     "ServiceToken" : String,
     "Description": String,
+    "RefreshOnUpdate": Boolean,
     "Version": String
   }
 }
@@ -25,6 +26,7 @@ You can specify the following properties:
 - `KeyAlias`  - to use to encrypt the key (default `alias/aws/ssm`)
 - `Description`  - for the parameter in the store. (Default '')
 - `ServiceToken`  - ARN pointing to the lambda function implementing this resource 
+- `RefreshOnUpdate` - generate a new key on update, default false.
 - `Version`  - an opaque string to enforce the generation of a new secret.
 
 ## Return values

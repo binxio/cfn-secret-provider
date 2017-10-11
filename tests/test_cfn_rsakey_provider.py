@@ -36,6 +36,15 @@ def test_create():
     assert response['Status'] == 'SUCCESS', response['Reason']
 
 
+def test_type_convert():
+    request = Request('Create', 'abc')
+    request['ResourceProperties']['RefreshOnUpdate'] = 'true'
+    r = RSAKeyProvider()
+    r.set_request(request, {})
+    assert r.is_valid_request()
+    assert isinstance(r.get('RefreshOnUpdate'), bool)
+
+
 def test_request_duplicate_create():
     # prrequest duplicate create
     name = '/test/parameter-%s' % uuid.uuid4()
@@ -62,6 +71,7 @@ def test_update_name():
     assert response['Status'] == 'SUCCESS', response['Reason']
     assert 'PhysicalResourceId' in response
     physical_resource_id = response['PhysicalResourceId']
+    public_key_1 = response['Data']['PublicKey']
 
     name_2 = '%s-2' % name
     request = Request('Update', name_2, physical_resource_id)
@@ -69,11 +79,46 @@ def test_update_name():
     assert response['Status'] == 'SUCCESS', response['Reason']
     assert 'PhysicalResourceId' in response
     assert 'Data' in response and 'Arn' in response['Data']
+    public_key_2 = response['Data']['PublicKey']
+
+    physical_resource_id_2 = response['PhysicalResourceId']
+    assert physical_resource_id != physical_resource_id_2
+    assert public_key_1 == public_key_2
+
+    # delete the parameters
+    request = Request('Delete', name, physical_resource_id)
+    response = handler(request, {})
+    assert response['Status'] == 'SUCCESS', response['Reason']
+
+    request = Request('Delete', name, physical_resource_id_2)
+    response = handler(request, {})
+    assert response['Status'] == 'SUCCESS', response['Reason']
+
+
+def test_update_private_key():
+    # create a keypair
+    name = 'k%s' % uuid.uuid4()
+    request = Request('Create', name)
+    response = handler(request, {})
+    assert response['Status'] == 'SUCCESS', response['Reason']
+    assert 'PhysicalResourceId' in response
+    physical_resource_id = response['PhysicalResourceId']
+    public_key_material = response['Data']['PublicKey']
+
+    # update keypair name
+    name_2 = 'k2%s' % name
+    request = Request('Update', name_2, physical_resource_id)
+    request['ResourceProperties']['RefreshOnUpdate'] = True
+    response = handler(request, {})
+    assert response['Status'] == 'SUCCESS', response['Reason']
 
     physical_resource_id_2 = response['PhysicalResourceId']
     assert physical_resource_id != physical_resource_id_2
 
-    # delete the parameters
+    public_key_material_2 = response['Data']['PublicKey']
+    assert public_key_material != public_key_material_2
+
+    # delete the keypairs
     request = Request('Delete', name, physical_resource_id)
     response = handler(request, {})
     assert response['Status'] == 'SUCCESS', response['Reason']

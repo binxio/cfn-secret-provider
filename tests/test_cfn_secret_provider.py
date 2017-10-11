@@ -20,6 +20,7 @@ def test_type_convert():
     request = Request('Create', 'abc')
     request['ResourceProperties']['Length'] = '62'
     request['ResourceProperties']['ReturnSecret'] = 'true'
+    request['ResourceProperties']['RefreshOnUpdate'] = 'true'
     r = SecretProvider()
     r.set_request(request, {})
     assert r.is_valid_request()
@@ -100,6 +101,39 @@ def test_update_name():
     assert physical_resource_id != physical_resource_id_2
 
     # delete the parameters
+    request = Request('Delete', name, physical_resource_id)
+    response = handler(request, {})
+    assert response['Status'] == 'SUCCESS', response['Reason']
+
+    request = Request('Delete', name, physical_resource_id_2)
+    response = handler(request, {})
+    assert response['Status'] == 'SUCCESS', response['Reason']
+
+
+def test_update_secret():
+    name = 'k%s' % uuid.uuid4()
+    request = Request('Create', name)
+    request['ResourceProperties']['ReturnSecret'] = True
+    response = handler(request, {})
+    assert response['Status'] == 'SUCCESS', response['Reason']
+    assert 'PhysicalResourceId' in response
+    physical_resource_id = response['PhysicalResourceId']
+    secret_1 = response['Data']['Secret']
+
+    name_2 = 'k2%s' % name
+    request = Request('Update', name_2, physical_resource_id)
+    request['ResourceProperties']['RefreshOnUpdate'] = True
+    request['ResourceProperties']['ReturnSecret'] = True
+    response = handler(request, {})
+    assert response['Status'] == 'SUCCESS', response['Reason']
+
+    physical_resource_id_2 = response['PhysicalResourceId']
+    assert physical_resource_id != physical_resource_id_2
+
+    secret_2 = response['Data']['Secret']
+    assert secret_1 != secret_2
+
+    # delete secrets
     request = Request('Delete', name, physical_resource_id)
     response = handler(request, {})
     assert response['Status'] == 'SUCCESS', response['Reason']
