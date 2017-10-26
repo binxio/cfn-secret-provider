@@ -116,6 +116,7 @@ class RSAKeyProvider(ResourceProvider):
 
             self.set_attribute('Arn', self.arn)
             self.set_attribute('PublicKey', public_key)
+            self.set_attribute('Hash', hashlib.md5(public_key).hexdigest())
 
             self.physical_resource_id = self.arn
         except ClientError as e:

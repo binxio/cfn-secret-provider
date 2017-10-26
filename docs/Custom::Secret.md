@@ -40,6 +40,7 @@ You can specify the following properties:
 With 'Fn::GetAtt' the following values are available:
 
 - `Secret` - the generated secret value, if `ReturnSecret` was set to True.
-- `Arn` - the AWS Resource name of the parameter
+- `Arn` - the AWS Resource name of the parameter.
+- `Hash` - of the secret.
 
 For more information about using Fn::GetAtt, see [Fn::GetAtt](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/intrinsic-function-reference-getatt.html).

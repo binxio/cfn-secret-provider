@@ -10,7 +10,7 @@ from botocore.exceptions import ClientError
 from cfn_resource_provider import ResourceProvider
 
 log = logging.getLogger()
-log.setLevel(os.environ.get("LOGLEVEL", "INFO"))
+log.setLevel(os.environ.get("LOG_LEVEL", "INFO"))
 
 
 request_schema = {
@@ -19,8 +19,6 @@ request_schema = {
             "properties": {
                 "Name": {"type": "string", "minLength": 1, "pattern": "[a-zA-Z0-9_/]+",
                          "description": "the name of the value in the parameters store"},
-                "RefreshOnUpdate": {"type": "boolean", "default": False,
-                                    "description": "generate a new secret on update"},
                 "PublicKeyMaterial": {"type": "string",
                                       "description": "the description of the value in the parameter store"},
                 "Version": {"type": "string",  "description": "opaque string to force update"}

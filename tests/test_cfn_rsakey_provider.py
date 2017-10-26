@@ -1,5 +1,6 @@
 import sys
 import uuid
+import hashlib
 from cfn_rsakey_provider import RSAKeyProvider
 from secrets import handler
 
@@ -28,7 +29,9 @@ def test_create():
     assert 'Data' in response
     assert 'Arn' in response['Data']
     assert 'PublicKey' in response['Data']
+    assert 'Hash' in response['Data']
     assert response['Data']['Arn'] == physical_resource_id
+    assert response['Data']['Hash'] == hashlib.md5(response['Data']['PublicKey']).hexdigest()
 
     # delete the parameters
     request = Request('Delete', name, physical_resource_id)
@@ -104,6 +107,7 @@ def test_update_private_key():
     assert 'PhysicalResourceId' in response
     physical_resource_id = response['PhysicalResourceId']
     public_key_material = response['Data']['PublicKey']
+    secure_hash = response['Data']['Hash']
 
     # update keypair name
     name_2 = 'k2%s' % name
@@ -117,6 +121,9 @@ def test_update_private_key():
 
     public_key_material_2 = response['Data']['PublicKey']
     assert public_key_material != public_key_material_2
+
+    secure_hash_2 = response['Data']['Hash']
+    assert secure_hash != secure_hash_2
 
     # delete the keypairs
     request = Request('Delete', name, physical_resource_id)

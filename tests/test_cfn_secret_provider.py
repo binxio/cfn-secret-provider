@@ -1,4 +1,5 @@
 import sys
+import hashlib 
 import uuid
 from cfn_secret_provider import SecretProvider
 from secrets import handler
@@ -55,7 +56,9 @@ def test_create():
     assert 'Data' in response
     assert 'Secret' in response['Data']
     assert 'Arn' in response['Data']
+    assert 'Hash' in response['Data']
     assert response['Data']['Arn'] == physical_resource_id
+    assert response['Data']['Hash'] == hashlib.md5(response['Data']['Secret']).hexdigest()
 
     # delete the parameters
     request = Request('Delete', name, physical_resource_id)
@@ -119,6 +122,8 @@ def test_update_secret():
     assert 'PhysicalResourceId' in response
     physical_resource_id = response['PhysicalResourceId']
     secret_1 = response['Data']['Secret']
+    secure_hash = response['Data']['Hash']
+    assert secure_hash == hashlib.md5(secret_1).hexdigest()
 
     name_2 = 'k2%s' % name
     request = Request('Update', name_2, physical_resource_id)
@@ -126,12 +131,15 @@ def test_update_secret():
     request['ResourceProperties']['ReturnSecret'] = True
     response = handler(request, {})
     assert response['Status'] == 'SUCCESS', response['Reason']
+    secure_hash_2 = response['Data']['Hash']
 
     physical_resource_id_2 = response['PhysicalResourceId']
     assert physical_resource_id != physical_resource_id_2
 
     secret_2 = response['Data']['Secret']
     assert secret_1 != secret_2
+
+    assert secure_hash != secure_hash_2
 
     # delete secrets
     request = Request('Delete', name, physical_resource_id)

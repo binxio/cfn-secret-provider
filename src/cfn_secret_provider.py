@@ -10,7 +10,7 @@ from botocore.exceptions import ClientError
 from cfn_resource_provider import ResourceProvider
 
 log = logging.getLogger()
-log.setLevel(os.environ.get("LOGLEVEL", "INFO"))
+log.setLevel(os.environ.get("LOG_LEVEL", "INFO"))
 
 
 request_schema = {
@@ -97,6 +97,7 @@ class SecretProvider(ResourceProvider):
             self.ssm.put_parameter(**kwargs)
 
             self.set_attribute('Arn', self.arn)
+            self.set_attribute('Hash', hashlib.md5(kwargs['Value']).hexdigest())
             if self.get('ReturnSecret'):
                 self.set_attribute('Secret', kwargs['Value'])
 
