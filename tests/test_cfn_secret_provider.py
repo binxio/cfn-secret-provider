@@ -1,5 +1,5 @@
 import sys
-import hashlib 
+import hashlib
 import uuid
 from cfn_secret_provider import SecretProvider
 from secrets import handler

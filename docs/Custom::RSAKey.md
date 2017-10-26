@@ -32,7 +32,8 @@ You can specify the following properties:
 ## Return values
 With 'Fn::GetAtt' the following values are available:
 
-- `PublicKey` - the public key of the generated key pair
+- `PublicKey` - the public key of the generated key pair, OpenSSL format
+- `PublicKeyPEM` - the public key of the generated key pair, in PEM format
 - `Arn` - the AWS Resource name of the parameter
 - `Hash` - of the public key
 

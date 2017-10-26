@@ -6,6 +6,7 @@ import hashlib
 import logging
 import boto3
 from random import choice
+from public_key_converter import rsa_to_pem
 from botocore.exceptions import ClientError
 from cfn_resource_provider import ResourceProvider
 from cryptography.hazmat.primitives import serialization as crypto_serialization
@@ -116,6 +117,7 @@ class RSAKeyProvider(ResourceProvider):
 
             self.set_attribute('Arn', self.arn)
             self.set_attribute('PublicKey', public_key)
+            self.set_attribute('PublicKeyPEM', rsa_to_pem(public_key))
             self.set_attribute('Hash', hashlib.md5(public_key).hexdigest())
 
             self.physical_resource_id = self.arn
