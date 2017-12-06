@@ -74,7 +74,7 @@ To install these custom resources, type:
 aws cloudformation create-stack \
 	--capabilities CAPABILITY_IAM \
 	--stack-name cfn-secret-provider \
-	--template-body file://cloudformation/cfn--resource-provider.json 
+	--template-body file://cloudformation/cfn-resource-provider.json 
 
 aws cloudformation wait stack-create-complete  --stack-name cfn-secret-provider 
 ```
