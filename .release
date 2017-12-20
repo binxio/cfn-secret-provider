@@ -1,3 +1,3 @@
-release=0.7.3
-tag=v0.7.3
+release=0.7.4
+tag=v0.7.4
 pre_tag_command=cd cloudformation && jq --arg version @@RELEASE@@ '.Parameters.CFNSecretProviderZipFileName.Default = ( "lambdas/cfn-secret-provider-" + $version + ".zip") ' cfn-resource-provider.json > x && mv x cfn-resource-provider.json
