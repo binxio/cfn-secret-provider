@@ -21,6 +21,8 @@ request_schema = {
     "properties": {
         "Name": {"type": "string", "minLength": 1, "pattern": "[a-zA-Z0-9_/]+",
                  "description": "the name of the private key in the parameters store"},
+        "KeySize": {"type": "integer", "default": 2048,
+                    "description": "number of bits in the key"},
         "Description": {"type": "string", "default": "",
                         "description": "the description of the key in the parameter store"},
         "KeyAlias": {"type": "string",
@@ -44,11 +46,7 @@ class RSAKeyProvider(ResourceProvider):
         self.account_id = (boto3.client('sts')).get_caller_identity()['Account']
 
     def convert_property_types(self):
-        try:
-            if 'RefreshOnUpdate' in self.properties and isinstance(self.properties['RefreshOnUpdate'], (str, unicode,)):
-                self.properties['RefreshOnUpdate'] = (self.properties['RefreshOnUpdate'] == 'true')
-        except ValueError as e:
-            log.error('failed to convert property types %s', e)
+        self.heuristic_convert_property_types(self.properties)
 
     @property
     def allow_overwrite(self):
@@ -83,7 +81,7 @@ class RSAKeyProvider(ResourceProvider):
         key = rsa.generate_private_key(
             backend=crypto_default_backend(),
             public_exponent=65537,
-            key_size=2048
+            key_size=self.get('KeySize')
         )
         private_key = key.private_bytes(
             crypto_serialization.Encoding.PEM,

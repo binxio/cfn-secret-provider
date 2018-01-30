@@ -4,6 +4,9 @@ import hashlib
 from cfn_rsakey_provider import RSAKeyProvider
 from secrets import handler
 
+from cryptography.hazmat.primitives.serialization import load_pem_public_key
+from cryptography.hazmat.backends import default_backend
+
 
 def test_defaults():
     request = Request('Create', 'abc')
@@ -33,7 +36,40 @@ def test_create():
     assert response['Data']['Arn'] == physical_resource_id
     assert response['Data']['Hash'] == hashlib.md5(response['Data']['PublicKey']).hexdigest()
 
+    public_key = load_pem_public_key(response['Data']['PublicKeyPEM'], backend=default_backend())
+    assert public_key.key_size == 2048
+
     # delete the parameters
+    request = Request('Delete', name, physical_resource_id)
+    response = handler(request, {})
+    assert response['Status'] == 'SUCCESS', response['Reason']
+
+
+def test_create_4096_key():
+    # create a test parameter
+    provider = RSAKeyProvider()
+    name = '/test/parameter-%s' % uuid.uuid4()
+    request = Request('Create', name)
+    request['ResourceProperties']['Description'] = 'A large private key'
+    request['ResourceProperties']['KeySize'] = '4096'
+    response = provider.handle(request, {})
+    assert response['Status'] == 'SUCCESS', response['Reason']
+    assert provider.is_valid_cfn_response(), response['Reason']
+    assert 'PhysicalResourceId' in response
+    physical_resource_id = response['PhysicalResourceId']
+
+    assert 'Data' in response
+    assert 'Arn' in response['Data']
+    assert 'PublicKey' in response['Data']
+    assert 'PublicKeyPEM' in response['Data']
+    assert 'Hash' in response['Data']
+    assert response['Data']['Arn'] == physical_resource_id
+    assert response['Data']['Hash'] == hashlib.md5(response['Data']['PublicKey']).hexdigest()
+
+    public_key = load_pem_public_key(response['Data']['PublicKeyPEM'], backend=default_backend())
+    assert public_key.key_size == 4096
+
+    # delete the parameter
     request = Request('Delete', name, physical_resource_id)
     response = handler(request, {})
     assert response['Status'] == 'SUCCESS', response['Reason']

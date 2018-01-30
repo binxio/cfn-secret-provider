@@ -1,4 +1,5 @@
 # Custom::RSAKey
+
 The `Custom::RSAKey` resource creates a private RSA key in the Parameter Store.
 An existing parameter in the Parameter Store will not be overwritten.
 
@@ -11,6 +12,7 @@ To declare this entity in your AWS CloudFormation template, use the following sy
   "Properties" : {
     "Name" : String,
     "KeyAlias" : String,
+    "KeySize": Integer
     "ServiceToken" : String,
     "Description": String,
     "RefreshOnUpdate": Boolean,
@@ -23,6 +25,7 @@ To declare this entity in your AWS CloudFormation template, use the following sy
 You can specify the following properties:
 
 - `Name`  - the name of the key in the Parameter Store (required)
+- `KeySize` - Size of the RSA key, defaults to 2048.
 - `KeyAlias`  - to use to encrypt the key (default `alias/aws/ssm`)
 - `Description`  - for the parameter in the store. (Default '')
 - `ServiceToken`  - ARN pointing to the lambda function implementing this resource 
