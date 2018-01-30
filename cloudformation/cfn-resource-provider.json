@@ -8,7 +8,7 @@
     },
     "CFNSecretProviderZipFileName": {
       "Type": "String",
-      "Default": "lambdas/cfn-secret-provider-0.7.4.zip"
+      "Default": "lambdas/cfn-secret-provider-0.7.5.zip"
     }
   },
   "Conditions": {
