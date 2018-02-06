@@ -60,6 +60,10 @@ class AccessKeyProvider(ResourceProvider):
         self.iam = boto3.client('iam')
         self.ssm = boto3.client('ssm')
 
+
+    def convert_property_types(self):
+        self.heuristic_convert_property_types(self.properties)
+
     def hash_secret(self, key):
         message = "SendRawEmail"
         version = '\x02'
