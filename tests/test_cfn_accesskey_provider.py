@@ -117,6 +117,7 @@ def test_create():
     assert response['Status'] == 'SUCCESS', response['Reason']
     valid_state(request, response)
     secret_access_key = response['Data']['SecretAccessKey']
+    access_key_id = response['Data']['AccessKeyId']
 
     #update to obtain password
     request = Request('Update', name, parameter_path, response['PhysicalResourceId'])
@@ -134,6 +135,7 @@ def test_create():
     response = handler(request, {})
     assert response['Status'] == 'SUCCESS', response['Reason']
     valid_state(request, response)
+    assert response['Data']['AccessKeyId'] != access_key_id
     assert response['Data']['SecretAccessKey'] != secret_access_key
     secret_access_key = response['Data']['SecretAccessKey']
     physical_resource_id = response['PhysicalResourceId']

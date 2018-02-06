@@ -8,7 +8,7 @@ import string
 from cfn_resource_provider import ResourceProvider
 from botocore.exceptions import ClientError
 
-log = logging.getLogger()
+log = logging.getLogger(__name__)
 
 request_schema = {
     "type": "object",
@@ -63,6 +63,7 @@ class AccessKeyProvider(ResourceProvider):
 
     def convert_property_types(self):
         self.heuristic_convert_property_types(self.properties)
+        self.heuristic_convert_property_types(self.old_properties)
 
     def hash_secret(self, key):
         message = "SendRawEmail"
@@ -204,15 +205,21 @@ class AccessKeyProvider(ResourceProvider):
 
     @property
     def update_requires_new_key(self):
+        log.debug('new %s', self.properties)
+        log.debug('old %s', self.old_properties)
         if self.get('Serial', 1) > self.get_old('Serial', 1):
+            log.info('forcing new key due to higher serial number\n')
             return True
 
         if self.get('UserName') != self.get_old('UserName', self.get('UserName')):
+            log.info('forcing new key due to new username\n')
             return True
 
         if self.get('ParameterPath') != self.get_old('ParameterPath', self.get('ParameterPath')):
+            log.info('forcing new key due to new parameter path\n')
             return True
 
+        log.info('keeping existing key\n')
         return False
 
     def update(self):

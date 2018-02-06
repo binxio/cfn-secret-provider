@@ -1,5 +1,6 @@
 ---
 AWSTemplateFormatVersion: '2010-09-09'
+Description: Demo Custom CloudFormation Secret Provider
 Resources:
   User:
     Type: AWS::IAM::User
@@ -20,7 +21,7 @@ Resources:
   DBPassword:
     Type: Custom::Secret
     Properties:
-      Name: !Sub '${AWS::StackName}/demo/PGPASSWORD'
+      Name: !Sub '/${AWS::StackName}/demo/PGPASSWORD'
       Alphabet: abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_@#!
       Length: 30
       ReturnSecret: true
@@ -30,7 +31,7 @@ Resources:
   PrivateKey:
     Type: Custom::RSAKey
     Properties:
-      Name: !Sub '${AWS::StackName}/demo/private-key'
+      Name: !Sub '/${AWS::StackName}/demo/private-key'
       Version: v1
       ServiceToken: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:binxio-cfn-secret-provider'
 
@@ -61,9 +62,9 @@ Outputs:
     Description: SMTP password for the user
 
   AccessSecretKey:
-    Value: !GetAtt 'AccessKey.AccessSecretKey'
+    Value: !GetAtt 'AccessKey.SecretAccessKey'
     Description: access secret key for the user
 
   AccessSecretId:
-    Value: !GetAtt 'AccessKey.AccessSecretId'
+    Value: !GetAtt 'AccessKey.AccessKeyId'
     Description: access secret id for the user
