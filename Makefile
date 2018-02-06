@@ -69,7 +69,7 @@ clean:
 	rm -rf venv target src/*.pyc tests/*.pyc
 
 test: venv
-	jq . cloudformation/*.json > /dev/null
+	for n in ./cloudformation/*.yaml ; do aws cloudformation validate-template --template-body file://$$n ; done
 	. ./venv/bin/activate && \
 	pip --quiet install -r test-requirements.txt && \
 	cd src && \
@@ -84,7 +84,7 @@ deploy-provider:
 	aws cloudformation $$COMMAND-stack \
 		--capabilities CAPABILITY_IAM \
 		--stack-name $(NAME) \
-		--template-body file://cloudformation/cfn-resource-provider.json ; \
+		--template-body file://cloudformation/cfn-resource-provider.yaml ; \
 	aws cloudformation wait stack-$$COMMAND-complete  --stack-name $(NAME) 
 
 delete-provider:
@@ -95,7 +95,7 @@ demo:
 	COMMAND=$(shell if aws cloudformation get-template-summary --stack-name $(NAME)-demo >/dev/null 2>&1; then \
 			echo update; else echo create; fi) ; \
 	aws cloudformation $$COMMAND-stack --stack-name $(NAME)-demo \
-		--template-body file://cloudformation/demo-stack.json ; \
+		--template-body file://cloudformation/demo-stack.yaml ; \
 	aws cloudformation wait stack-$$COMMAND-complete  --stack-name $(NAME)-demo
 
 delete-demo:

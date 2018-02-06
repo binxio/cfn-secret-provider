@@ -1,0 +1,69 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Resources:
+  User:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: !Sub '${AWS::StackName}-secret-user'
+
+  AccessKey:
+    Type: Custom::AccessKey
+    Properties:
+      UserName: !Sub '${AWS::StackName}-secret-user'
+      ParameterPath: !Sub '/iam-users/${AWS::StackName}-secret-user'
+      Serial: 1
+      Status: Active
+      ReturnSecret: true
+      ReturnPassword: true
+      ServiceToken: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:binxio-cfn-secret-provider'
+
+  DBPassword:
+    Type: Custom::Secret
+    Properties:
+      Name: !Sub '${AWS::StackName}/demo/PGPASSWORD'
+      Alphabet: abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_@#!
+      Length: 30
+      ReturnSecret: true
+      Version: v1
+      ServiceToken: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:binxio-cfn-secret-provider'
+
+  PrivateKey:
+    Type: Custom::RSAKey
+    Properties:
+      Name: !Sub '${AWS::StackName}/demo/private-key'
+      Version: v1
+      ServiceToken: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:binxio-cfn-secret-provider'
+
+  KeyPair:
+    Type: Custom::KeyPair
+    DependsOn: PrivateKey
+    Properties:
+      Name: CustomKeyPair
+      PublicKeyMaterial: !GetAtt 'PrivateKey.PublicKey'
+      ServiceToken: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:binxio-cfn-secret-provider'
+
+Outputs:
+  Secret:
+    Value: !GetAtt 'DBPassword.Secret'
+    Description: the generated secret, do expose this as Output Parameter in production
+  Arn:
+    Value: !GetAtt 'DBPassword.Arn'
+    Description: ARN of the password in the Parameter Store
+  PublicKey:
+    Value: !GetAtt 'PrivateKey.PublicKey'
+    Description: the public key, safe to expose
+  PrivateKeyArn:
+    Value: !GetAtt 'PrivateKey.Arn'
+    Description: ARN of the private key in the Parameter Store
+
+  SMTPPassword:
+    Value: !GetAtt 'AccessKey.SMTPPassword'
+    Description: SMTP password for the user
+
+  AccessSecretKey:
+    Value: !GetAtt 'AccessKey.AccessSecretKey'
+    Description: access secret key for the user
+
+  AccessSecretId:
+    Value: !GetAtt 'AccessKey.AccessSecretId'
+    Description: access secret id for the user

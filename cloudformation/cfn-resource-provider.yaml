@@ -1,0 +1,66 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CloudFormation Secret Provider
+Parameters:
+  LambdaS3Bucket:
+    Type: String
+    Default: 'binxio-public'
+Resources:
+  LambdaPolicy:
+    Type: AWS::IAM::Policy
+    DependsOn:
+      - LambdaRole
+    Properties:
+      PolicyName: CFNCustomSecretProviderPolicy
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - iam:CreateAccessKey
+              - iam:DeleteAccessKey
+              - iam:UpdateAccessKey
+              - ssm:PutParameter
+              - ssm:GetParameter
+              - ssm:DeleteParameter
+              - ec2:ImportKeyPair
+              - ec2:DeleteKeyPair
+            Resource:
+              - '*'
+          - Effect: Allow
+            Action:
+              - kms:Encrypt
+            Resource:
+              - '*'
+          - Action:
+              - logs:*
+            Resource: arn:aws:logs:*:*:*
+            Effect: Allow
+      Roles:
+        - !Ref 'LambdaRole'
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Action:
+              - sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+  CFNSecretProvider:
+    Type: AWS::Lambda::Function
+    DependsOn:
+      - LambdaRole
+    Properties:
+      Description: CloudFormation Custom:Secret implementation
+      Code:
+        S3Bucket: !Sub '${LambdaS3Bucket}-${AWS::Region}'
+        S3Key: lambdas/cfn-secret-provider-0.7.5.zip
+      FunctionName: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:binxio-cfn-secret-provider'
+      Handler: secrets.handler
+      MemorySize: 128
+      Role: !GetAtt 'LambdaRole.Arn'
+      Runtime: python2.7
