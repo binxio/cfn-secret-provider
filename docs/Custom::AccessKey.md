@@ -6,23 +6,44 @@ To declare this entity in your AWS CloudFormation template, use the following sy
 
 ```yaml
 Resources:
-    SMTPSecret:
-      Type : Custom::AccessKey
-      Properties:
+  AccessKey:
+    Type: Custom::AccessKey
+    Properties:
+      Description: sample user credential
+      UserName: '<UserName>'
+      ParameterPath: '<Parameter Path>'
+      Serial: 1
+      Status: Active
+      ReturnSecret: false
+      ReturnPassword: true
+      ServiceToken: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:binxio-cfn-secret-provider'
         
 Outputs:
+    AccessKeyId:
+        Value: !Ref AccessKey.AccessKeyId
+    AccessSecretKey:
+        Value: !Ref AccessKey.AccessSecretKey
     SMTPPassword:
-        Value: !Ref SMTPSecret.Password
+        Value: !Ref AccessKey.SMTPPassword
 ```
+
+The access key id, access secret and the smtp password are stored in the parameter store under the paths `ParameterPath/aws_access_key_id`, `ParameterPath/aws_access_secret_key` and `ParameterPath/smtp_password` respectively.
 
 ## Properties
 You can specify the following properties:
 
-- `SecretAccessKey`  - the secret access key to convert.
+- `UserName`  - to create an access key for.
+- `ParameterPath`  - into the parameter store to store the credentials
+- `Serial`  - to force the access key to be recycled
+- `Status`  - Active or Inactive
+- `ReturnSecret`  - returns access id and access secret as attribute
+- `ReturnPassword`  - returns access id and SMTP password as attribute
 
 ## Return values
 With 'Fn::GetAtt' the following values are available:
 
-- `Password` - the SMTP password based on the Secret access key.
+- `AccessKeyId` - the public part of the access key (if ReturnPassword or ReturnSecret is true).
+- `SMTPPassword` - the SMTP password based for the access key (if ReturnPassword is true).
+- `AccessSecretKey` - the secret part of the access key (if ReturnSecret is true).
 
 For more information about using Fn::GetAtt, see [Fn::GetAtt](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/intrinsic-function-reference-getatt.html).
