@@ -112,7 +112,8 @@ def fake_cfn(request, context):
     if request['RequestType'] == 'Delete':
         physical_resource_id = request['PhysicalResourceId']
         response = handler(request, context)
-        del objects[physical_resource_id]
+        if physical_resource_id in objects:
+            del objects[physical_resource_id]
         return response
 
     if request['RequestType'] == 'Update':
@@ -135,7 +136,7 @@ def fake_cfn(request, context):
     return response
 
 
-def test_create():
+def xtest_create():
     name = 'test-{}'.format(uuid.uuid4())
     parameter_path = '/{0}/{0}'.format(name)
     create_user(name)
@@ -214,6 +215,43 @@ def test_create():
     assert access_key_id == response['PhysicalResourceId']
     valid_state(request, response)
     assert response['Data']['SecretAccessKey'] == secret_access_key
+
+
+def test_invalid_physical_resource_id():
+    request = Request('Delete', 'bla', '/ok', 'devapi-auth0rules-Auth0AccessKey-1F0NKYHR4YF7Y')
+    response = handler(request, {})
+    assert response['Status'] == 'SUCCESS', response['Reason']
+    assert response['Reason'] == 'physical resource id is not an access key id.'
+
+
+def test_delete_non_existing_access_key():
+    name = '/test-{}'.format(uuid.uuid4())
+    request = Request('Delete', 'bla', name, 'AAAAAAAAAAAAAAAAAA')
+    response = handler(request, {})
+    assert response['Status'] == 'SUCCESS', response['Reason']
+    assert response['Reason'].startswith('no access key found under /')
+
+
+def test_delete_lost_parameter_path():
+    name = 'test-{}'.format(uuid.uuid4())
+    parameter_path = '/{0}/{0}'.format(name)
+    create_user(name)
+
+    request = Request('Create', name, parameter_path)
+    response = fake_cfn(request, {})
+    assert response['Status'] == 'SUCCESS', response['Reason']
+
+    non_existing_path = '/test-{}'.format(uuid.uuid4())
+    request = Request('Delete', name, non_existing_path, response['PhysicalResourceId'])
+    error_response = fake_cfn(request, {})
+    assert error_response['Status'] == 'SUCCESS', response['Reason']
+    assert error_response['Reason'].startswith('no access key found under /')
+
+    request = Request('Delete', name, parameter_path, response['PhysicalResourceId'])
+    response = fake_cfn(request, {})
+    assert response['Status'] == 'SUCCESS', response['Reason']
+    assert response['Reason'] == ''
+    valid_deleted_state(request, response)
 
 
 def delete_all_resources():

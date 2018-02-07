@@ -154,15 +154,18 @@ class AccessKeyProvider(ResourceProvider):
         if parameter_path is None:
             parameter_path = self.parameter_path
 
-        result = {}
-        response = self.ssm.get_parameter(Name='{}/aws_access_key_id'.format(parameter_path), WithDecryption=True)
-        result['AccessKeyId'] = response['Parameter']['Value']
-        response = self.ssm.get_parameter(Name='{}/aws_secret_access_key'.format(parameter_path), WithDecryption=True)
-        result['SecretAccessKey'] = response['Parameter']['Value']
-        response = self.ssm.get_parameter(Name='{}/smtp_password'.format(parameter_path), WithDecryption=True)
-        result['SMTPPassword'] = response['Parameter']['Value']
-
-        return result
+        try:
+            result = {}
+            response = self.ssm.get_parameter(Name='{}/aws_access_key_id'.format(parameter_path), WithDecryption=True)
+            result['AccessKeyId'] = response['Parameter']['Value']
+            response = self.ssm.get_parameter(Name='{}/aws_secret_access_key'.format(parameter_path), WithDecryption=True)
+            result['SecretAccessKey'] = response['Parameter']['Value']
+            response = self.ssm.get_parameter(Name='{}/smtp_password'.format(parameter_path), WithDecryption=True)
+            result['SMTPPassword'] = response['Parameter']['Value']
+            return result
+        except self.ssm.exceptions.ParameterNotFound as e:
+            log.error('%s', e.message)
+            return None
 
     def set_result_attributes(self, access_key):
         self.physical_resource_id = access_key['AccessKeyId']
@@ -221,22 +224,32 @@ class AccessKeyProvider(ResourceProvider):
             except ClientError as e:
                 self.fail('failed to update access key, {}'.format(e))
 
-            # avoid unnecessary gets to the parameter store
             old_access_key = self.get_from_parameter_store()
-            self.set_result_attributes(old_access_key)
+            if old_access_key is not None:
+                self.set_result_attributes(old_access_key)
+            else:
+                self.fail('access key was not found under {}.'.format(self.parameter_path))
 
     def delete(self):
         if self.physical_resource_id == 'could-not-create':
+            return
+
+        if not re.match(r'^[A-Z0-9]+$', self.physical_resource_id):
+            self.success('physical resource id is not an access key id.')
             return
 
         access_key = {'AccessKeyId': self.physical_resource_id, 'UserName': self.get('UserName')}
         self.delete_access_key(access_key)
 
         old_access_key = self.get_from_parameter_store()
-        if old_access_key['AccessKeyId'] == self.physical_resource_id:
+        if old_access_key is not None and old_access_key['AccessKeyId'] == self.physical_resource_id:
             self.remove_from_parameter_store()
+        elif old_access_key is not None:
+            msg = 'keeping parameters as the access key has changed.'
+            self.response['Reason'] = '{}{}'.format(self.reason, msg)
         else:
-            log.info('keeping parameters as the access key has changed.')
+            msg = 'no access key found under {}.'.format(self.parameter_path)
+            self.response['Reason'] = '{}{}'.format(self.reason, msg)
 
 provider = AccessKeyProvider()
 
