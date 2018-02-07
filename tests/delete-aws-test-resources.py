@@ -11,7 +11,7 @@ for user in iam.list_users()['Users']:
         print 'deleting user {}'.format(username)
         iam.delete_user(UserName=username)
 
-for parameter in ssm.describe_parameters()['Parameters']:
+for parameter in ssm.describe_parameters(MaxResults=50)['Parameters']:
     name = parameter['Name']
     if name.startswith('test-') or name.startswith('/test-'):
         print 'deleting parameter {}'.format(name)
