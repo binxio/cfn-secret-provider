@@ -39,7 +39,7 @@ Resources:
     Type: Custom::KeyPair
     DependsOn: PrivateKey
     Properties:
-      Name: CustomKeyPair
+      Name: !Sub '!{AWS::StackName}-custom-key-pair'
       PublicKeyMaterial: !GetAtt 'PrivateKey.PublicKey'
       ServiceToken: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:binxio-cfn-secret-provider'
 
