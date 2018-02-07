@@ -66,5 +66,5 @@ Outputs:
     Description: access secret key for the user
 
   AccessSecretId:
-    Value: !GetAtt 'AccessKey.AccessKeyId'
+    Value: !Ref 'AccessKey'
     Description: access secret id for the user
