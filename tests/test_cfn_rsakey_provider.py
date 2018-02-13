@@ -33,11 +33,21 @@ def test_create():
     assert 'Arn' in response['Data']
     assert 'PublicKey' in response['Data']
     assert 'Hash' in response['Data']
+    assert 'Version' in response['Data']
     assert response['Data']['Arn'] == physical_resource_id
     assert response['Data']['Hash'] == hashlib.md5(response['Data']['PublicKey']).hexdigest()
+    assert response['Data']['Version'] == 1
 
     public_key = load_pem_public_key(response['Data']['PublicKeyPEM'], backend=default_backend())
     assert public_key.key_size == 2048
+
+    request['RequestType'] = 'Update'
+    request['ResourceProperties']['RefreshOnUpdate'] = True
+    request['PhysicalResourceId'] = physical_resource_id
+    response = provider.handle(request, {})
+    assert response['Status'] == 'SUCCESS', response['Reason']
+    assert response['Data']['Hash'] == hashlib.md5(response['Data']['PublicKey']).hexdigest()
+    assert response['Data']['Version'] == 2
 
     # delete the parameters
     request = Request('Delete', name, physical_resource_id)

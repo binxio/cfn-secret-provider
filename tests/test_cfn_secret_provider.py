@@ -57,9 +57,23 @@ def test_create():
     assert 'Secret' in response['Data']
     assert 'Arn' in response['Data']
     assert 'Hash' in response['Data']
+    assert 'Version' in response['Data']
     assert response['Data']['Arn'] == physical_resource_id
     assert response['Data']['Hash'] == hashlib.md5(response['Data']['Secret']).hexdigest()
+    assert response['Data']['Version'] == 1
 
+    # update the key
+    hash = response['Data']['Hash']
+    request['RequestType'] = 'Update'
+    request['ResourceProperties']['RefreshOnUpdate'] = True
+    request['PhysicalResourceId'] = physical_resource_id
+    response = handler(request, {})
+    assert response['Status'] == 'SUCCESS', response['Reason']
+    assert response['Data']['Arn'] == physical_resource_id
+    assert response['Data']['Version'] == 2
+    assert response['Data']['Hash'] != hash
+
+    response = handler(request, {})
     # delete the parameters
     request = Request('Delete', name, physical_resource_id)
     response = handler(request, {})

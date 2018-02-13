@@ -94,10 +94,13 @@ class SecretProvider(ResourceProvider):
             else:
                 kwargs['Value'] = self.get_secret()
 
-            self.ssm.put_parameter(**kwargs)
+            response = self.ssm.put_parameter(**kwargs)
+            version = response['Version'] if 'Version' in response else 1
 
             self.set_attribute('Arn', self.arn)
             self.set_attribute('Hash', hashlib.md5(kwargs['Value']).hexdigest())
+            self.set_attribute('Version', version)
+
             if self.get('ReturnSecret'):
                 self.set_attribute('Secret', kwargs['Value'])
 

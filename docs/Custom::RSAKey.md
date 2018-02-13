@@ -30,7 +30,7 @@ You can specify the following properties:
 - `Description`  - for the parameter in the store. (Default '')
 - `ServiceToken`  - ARN pointing to the lambda function implementing this resource 
 - `RefreshOnUpdate` - generate a new key on update, default false.
-- `Version`  - an opaque string to enforce the generation of a new secret.
+- `Version`  - an opaque string to enforce the generation of a new secret 
 
 ## Return values
 With 'Fn::GetAtt' the following values are available:
@@ -39,5 +39,10 @@ With 'Fn::GetAtt' the following values are available:
 - `PublicKeyPEM` - the public key of the generated key pair, in PEM format
 - `Arn` - the AWS Resource name of the parameter
 - `Hash` - of the public key
+- `Version` - of the value in the store.
+
+### Caveat - Version usage
+Note that the input Version is just an opaque string to force an update of the key if RefreshOnUpdate is true, where as the returned Version attribute is the actual version of the parameter value in the store.
+
 
 For more information about using Fn::GetAtt, see [Fn::GetAtt](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/intrinsic-function-reference-getatt.html).

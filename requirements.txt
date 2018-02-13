@@ -1,4 +1,5 @@
-boto3
+boto3>=1.5.27
+botocore==1.8.41
 cfn_resource_provider==0.8.6
 cryptography
 pyasn1

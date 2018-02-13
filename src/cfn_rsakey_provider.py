@@ -111,12 +111,14 @@ class RSAKeyProvider(ResourceProvider):
             if self.get('Description') != '':
                 kwargs['Description'] = self.get('Description')
 
-            self.ssm.put_parameter(**kwargs)
+            response = self.ssm.put_parameter(**kwargs)
+            version = response['Version'] if 'Version' in response else 1
 
             self.set_attribute('Arn', self.arn)
             self.set_attribute('PublicKey', public_key)
             self.set_attribute('PublicKeyPEM', rsa_to_pem(public_key))
             self.set_attribute('Hash', hashlib.md5(public_key).hexdigest())
+            self.set_attribute('Version', version)
 
             self.physical_resource_id = self.arn
         except ClientError as e:
