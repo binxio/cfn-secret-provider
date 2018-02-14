@@ -9,15 +9,6 @@ class DSAKeyProvider(RSAKeyProvider):
     def __init__(self):
         super(DSAKeyProvider, self).__init__()
 
-    def public_key_to_pem(self, private_key, public_key):
-        key = crypto_serialization.load_pem_private_key(
-            private_key, password=None, backend=crypto_default_backend())
-        pem = key.public_key().public_bytes(
-            crypto_serialization.Encoding.PEM,
-            crypto_serialization.PublicFormat.SubjectPublicKeyInfo
-        )
-        return pem
-
     def get_key(self):
         response = self.ssm.get_parameter(Name=self.name_from_physical_resource_id(), WithDecryption=True)
         private_key = str(response['Parameter']['Value'])

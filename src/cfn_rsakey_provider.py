@@ -6,7 +6,6 @@ import hashlib
 import logging
 import boto3
 from random import choice
-from public_key_converter import rsa_to_pem
 from botocore.exceptions import ClientError
 from cfn_resource_provider import ResourceProvider
 from cryptography.hazmat.primitives import serialization as crypto_serialization
@@ -95,7 +94,14 @@ class RSAKeyProvider(ResourceProvider):
         return (private_key, public_key)
 
     def public_key_to_pem(self, private_key, public_key):
-        return rsa_to_pem(public_key)
+        key = crypto_serialization.load_pem_private_key(
+            private_key, password=None, backend=crypto_default_backend())
+
+        return key.public_key().public_bytes(
+            crypto_serialization.Encoding.PEM,
+            crypto_serialization.PublicFormat.SubjectPublicKeyInfo
+        )
+
 
     def create_or_update_secret(self, overwrite=False, new_secret=True):
         try:
