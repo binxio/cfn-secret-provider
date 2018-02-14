@@ -94,6 +94,9 @@ class RSAKeyProvider(ResourceProvider):
         )
         return (private_key, public_key)
 
+    def public_key_to_pem(self, private_key, public_key):
+        return rsa_to_pem(public_key)
+
     def create_or_update_secret(self, overwrite=False, new_secret=True):
         try:
             if new_secret:
@@ -116,7 +119,7 @@ class RSAKeyProvider(ResourceProvider):
 
             self.set_attribute('Arn', self.arn)
             self.set_attribute('PublicKey', public_key)
-            self.set_attribute('PublicKeyPEM', rsa_to_pem(public_key))
+            self.set_attribute('PublicKeyPEM', self.public_key_to_pem(private_key, public_key))
             self.set_attribute('Hash', hashlib.md5(public_key).hexdigest())
             self.set_attribute('Version', version)
 
