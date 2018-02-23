@@ -16,6 +16,7 @@ Resources:
       Status: Active
       ReturnSecret: false
       ReturnPassword: true
+      NoEcho: false
       ServiceToken: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:binxio-cfn-secret-provider'
         
 Outputs:
@@ -38,6 +39,7 @@ You can specify the following properties:
 - `Status`  - Active or Inactive
 - `ReturnSecret`  - returns access id and access secret as attribute
 - `ReturnPassword`  - returns access id and SMTP password as attribute
+- `NoEcho` - indicates whether the secret can be an output value, default 'True' meaning it cannot.   
 
 ## Return values
 With 'Fn::GetAtt' the following values are available:

@@ -45,7 +45,11 @@ request_schema = {
             "description": "status of the key"},
         "UserName": {
             "type": "string",
-            "description": "to create the access key for"}
+            "description": "to create the access key for"},
+        "NoEcho": {
+            "type": "boolean",
+            "default": True,
+            "description": "the secrets as output parameter"}
     }
 }
 
@@ -176,6 +180,7 @@ class AccessKeyProvider(ResourceProvider):
 
         if self.get('ReturnPassword'):
             self.set_attribute('SMTPPassword', self.hash_secret(access_key['SecretAccessKey']))
+        self.no_echo = self.get('NoEcho')
 
     def create(self):
         if not self.check_parameter_path_exists():

@@ -35,7 +35,8 @@ request_schema = {
                 "Length": {"type": "integer",  "minimum": 1, "maximum": 512,
                            "default": 30,
                            "description": "length of the secret"},
-                "Version": {"type": "string",  "description": "opaque string to force update"}
+                "Version": {"type": "string",  "description": "opaque string to force update"},
+                "NoEcho": {"type": "boolean",  "default": True, "description": "the secret as output parameter"}
             }
 }
 
@@ -56,6 +57,8 @@ class SecretProvider(ResourceProvider):
                 self.properties['Length'] = int(self.properties['Length'])
             if 'ReturnSecret' in self.properties and isinstance(self.properties['ReturnSecret'], (str, unicode,)):
                 self.properties['ReturnSecret'] = (self.properties['ReturnSecret'] == 'true')
+            if 'NoEcho' in self.properties and isinstance(self.properties['NoEcho'], (str, unicode,)):
+                self.properties['NoEcho'] = (self.properties['NoEcho'] == 'true')
             if 'RefreshOnUpdate' in self.properties and isinstance(self.properties['RefreshOnUpdate'], (str, unicode,)):
                 self.properties['RefreshOnUpdate'] = (self.properties['RefreshOnUpdate'] == 'true')
         except ValueError as e:
@@ -103,6 +106,7 @@ class SecretProvider(ResourceProvider):
 
             if self.get('ReturnSecret'):
                 self.set_attribute('Secret', kwargs['Value'])
+            self.no_echo = self.get('NoEcho')
 
             self.physical_resource_id = self.arn
         except ClientError as e:

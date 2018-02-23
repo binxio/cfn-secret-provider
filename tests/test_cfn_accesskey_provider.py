@@ -97,6 +97,12 @@ def valid_state(request, response):
     except ClientError as e:
         assert False, e.response
 
+    assert 'NoEcho' in response
+
+    if 'NoEcho' in properties:
+        assert properties['NoEcho'] == response['NoEcho']
+    else:
+        assert response['NoEcho'] == True
 
 objects = {}
 cfn_deleted = {}
@@ -136,7 +142,7 @@ def fake_cfn(request, context):
     return response
 
 
-def xtest_create():
+def test_create():
     name = 'test-{}'.format(uuid.uuid4())
     parameter_path = '/{0}/{0}'.format(name)
     create_user(name)
@@ -157,6 +163,7 @@ def xtest_create():
     # update to obtain password
     request = Request('Update', name, parameter_path, response['PhysicalResourceId'])
     request['ResourceProperties']['ReturnPassword'] = True
+    request['ResourceProperties']['NoEcho'] = False
     response = fake_cfn(request, {})
     assert response['Status'] == 'SUCCESS', response['Reason']
     valid_state(request, response)
