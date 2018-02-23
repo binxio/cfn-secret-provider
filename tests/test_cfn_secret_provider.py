@@ -215,6 +215,37 @@ def test_create_no_return_secret():
     assert response['Status'] == 'SUCCESS', response['Reason']
 
 
+def test_create_with_content():
+    # create a test parameter with content value set
+    name = '/test/6-parameter-%s' % uuid.uuid4()
+    secretContent = 'Don\'t read my secret'
+    request = Request('Create', name)
+    request['ResourceProperties']['ReturnSecret'] = True
+    request['ResourceProperties']['Description'] = 'A custom secret'
+    request['ResourceProperties']['Content'] = secretContent
+    response = handler(request, {})
+    assert response['Status'] == 'SUCCESS', response['Reason']
+    assert 'PhysicalResourceId' in response
+    physical_resource_id = response['PhysicalResourceId']
+    assert isinstance(physical_resource_id, str)
+
+    assert 'Data' in response
+    assert 'Secret' in response['Data']
+    assert 'Arn' in response['Data']
+    assert 'Hash' in response['Data']
+    assert 'Version' in response['Data']
+    assert response['Data']['Arn'] == physical_resource_id
+    assert response['Data']['Hash'] == hashlib.md5(response['Data']['Secret']).hexdigest()
+    assert response['Data']['Secret'] == secretContent
+    assert response['Data']['Version'] == 1
+
+    response = handler(request, {})
+    # delete the parameters
+    request = Request('Delete', name, physical_resource_id)
+    response = handler(request, {})
+    assert response['Status'] == 'SUCCESS', response['Reason']
+
+
 class Request(dict):
 
     def __init__(self, request_type, name, physical_resource_id=None):

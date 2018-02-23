@@ -32,6 +32,9 @@ request_schema = {
                 "KeyAlias": {"type": "string",
                              "default": "alias/aws/ssm",
                              "description": "KMS key to use to encrypt the value"},
+                "Content": {"type": "string",
+                             "default": "",
+                             "description": "Specific content to be stored as value. If given, no random value will be generated"},
                 "Length": {"type": "integer",  "minimum": 1, "maximum": 512,
                            "default": 30,
                            "description": "length of the secret"},
@@ -90,7 +93,7 @@ class SecretProvider(ResourceProvider):
                 kwargs['Description'] = self.get('Description')
 
             if new_secret:
-                kwargs['Value'] = "".join(choice(self.get('Alphabet')) for x in range(0, self.get('Length')))
+                kwargs['Value'] = "".join(choice(self.get('Alphabet')) for x in range(0, self.get('Length'))) if self.get('Content') == "" else self.get('Content')
             else:
                 kwargs['Value'] = self.get_secret()
 
