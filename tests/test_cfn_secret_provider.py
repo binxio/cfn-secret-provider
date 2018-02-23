@@ -15,6 +15,7 @@ def test_defaults():
     assert not r.get('ReturnSecret')
     assert r.get('KeyAlias') == 'alias/aws/ssm'
     assert r.get('Description') == ''
+    assert isinstance(r.get('NoEcho'), bool) and r.get('NoEcho')
 
 
 def test_type_convert():
@@ -58,9 +59,11 @@ def test_create():
     assert 'Arn' in response['Data']
     assert 'Hash' in response['Data']
     assert 'Version' in response['Data']
+    assert 'NoEcho' in response
     assert response['Data']['Arn'] == physical_resource_id
     assert response['Data']['Hash'] == hashlib.md5(response['Data']['Secret']).hexdigest()
     assert response['Data']['Version'] == 1
+    assert response['NoEcho'] == True
 
     # update the key
     hash = response['Data']['Hash']
@@ -199,6 +202,7 @@ def test_create_no_return_secret():
     name = '/test/5-parameter-%s' % uuid.uuid4()
     request = Request('Create', name)
     request['ResourceProperties']['ReturnSecret'] = False
+    request['ResourceProperties']['NoEcho'] = False
     response = handler(request, {})
     assert response['Status'] == 'SUCCESS', response['Reason']
     assert 'PhysicalResourceId' in response
@@ -207,10 +211,34 @@ def test_create_no_return_secret():
     assert 'Data' in response
     assert 'Secret' not in response['Data']
     assert 'Arn' in response['Data']
+    assert 'NoEcho' in response and response['NoEcho'] == False
     assert response['Data']['Arn'] == physical_resource_id
 
     # delete the parameters
     request = Request('Delete', name, physical_resource_id)
+    response = handler(request, {})
+    assert response['Status'] == 'SUCCESS', response['Reason']
+
+
+def test_no_echo():
+    # create a test parameter
+    name = '/test/parameter-%s' % uuid.uuid4()
+    request = Request('Create', name)
+    request['ResourceProperties']['ReturnSecret'] = True
+    response = handler(request, {})
+    assert response['Status'] == 'SUCCESS', response['Reason']
+    assert 'NoEcho' in response
+    assert response['NoEcho'] == True
+    physical_resource_id = response['PhysicalResourceId']
+    request['PhysicalResourceId'] = physical_resource_id
+    request['ResourceProperties']['NoEcho'] = False
+    request['RequestType'] = 'Update'
+    response = handler(request, {})
+    assert response['Status'] == 'SUCCESS', response['Reason']
+    assert 'NoEcho' in response
+    assert response['NoEcho'] == False
+
+    request['RequestType'] = 'Delete'
     response = handler(request, {})
     assert response['Status'] == 'SUCCESS', response['Reason']
 

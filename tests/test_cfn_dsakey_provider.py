@@ -15,6 +15,7 @@ def test_defaults():
     assert r.is_valid_request()
     assert r.get('KeyAlias') == 'alias/aws/ssm'
     assert r.get('Description') == ''
+    assert isinstance(r.get('NoEcho'), bool) and r.get('NoEcho')
 
 
 def test_create():
@@ -225,6 +226,29 @@ def test_create_no_return_secret():
 
     # delete the parameters
     request = Request('Delete', name, physical_resource_id)
+    response = handler(request, {})
+    assert response['Status'] == 'SUCCESS', response['Reason']
+
+
+def test_no_echo():
+    # create a test parameter
+    name = '/test/parameter-%s' % uuid.uuid4()
+    request = Request('Create', name)
+    request['ResourceProperties']['ReturnSecret'] = True
+    response = handler(request, {})
+    assert response['Status'] == 'SUCCESS', response['Reason']
+    assert 'NoEcho' in response
+    assert response['NoEcho'] == True
+    physical_resource_id = response['PhysicalResourceId']
+    request['PhysicalResourceId'] = physical_resource_id
+    request['ResourceProperties']['NoEcho'] = False
+    request['RequestType'] = 'Update'
+    response = handler(request, {})
+    assert response['Status'] == 'SUCCESS', response['Reason']
+    assert 'NoEcho' in response
+    assert response['NoEcho'] == False
+
+    request['RequestType'] = 'Delete'
     response = handler(request, {})
     assert response['Status'] == 'SUCCESS', response['Reason']
 

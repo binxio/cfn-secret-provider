@@ -16,6 +16,7 @@ Resources:
       Status: Active
       ReturnSecret: true
       ReturnPassword: true
+      NoEcho: True
       ServiceToken: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:binxio-cfn-secret-provider'
 
   DBPassword:

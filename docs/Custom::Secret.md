@@ -18,7 +18,8 @@ To declare this entity in your AWS CloudFormation template, use the following sy
     "ServiceToken" : String,
     "RefreshOnUpdate": Boolean,
     "ReturnSecret": Boolean,
-    "Version": String
+    "Version": String,
+    "NoEcho": Boolean
   }
 }
 ```
@@ -35,6 +36,7 @@ You can specify the following properties:
 - `RefreshOnUpdate`  - generate a new secret on update (Default 'false')
 - `ServiceToken`  - ARN pointing to the lambda function implementing this resource 
 - `Version`  - optional, an opaque string to enforce the generation of a new secret.
+- `NoEcho` - indicates whether the secret can be an output value, default 'True' meaning it cannot.
 
 ## Return values
 With 'Fn::GetAtt' the following values are available:
