@@ -46,6 +46,15 @@ deploy:
 	done
 		
 
+undeploy:
+	@for REGION in $(ALL_REGIONS); do \
+                echo "copying to region $$REGION.." ; \
+                aws s3 --region $(AWS_REGION) \
+                        rm  \
+                        s3://binxio-public-$$REGION/lambdas/$(NAME)-$(VERSION).zip; \
+        done
+
+
 do-push: deploy
 
 do-build: local-build
