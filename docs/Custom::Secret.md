@@ -1,5 +1,5 @@
 # Custom::Secret
-The `Custom::Secret` resource creates a parameter in the Parameter Store with SecureString value containing an randomized string.
+The `Custom::Secret` resource creates a parameter in the Parameter Store with SecureString value containing an randomized string. You can also explicit set a value.
 
 An existing parameter in the Parameter Store will not be overwritten.
 
@@ -15,6 +15,7 @@ To declare this entity in your AWS CloudFormation template, use the following sy
     "Alphabet" : String,
     "Length" : Integer,
     "KeyAlias" : String,
+    "Content" : String,
     "ServiceToken" : String,
     "RefreshOnUpdate": Boolean,
     "ReturnSecret": Boolean,
@@ -36,6 +37,10 @@ You can specify the following properties:
 - `ServiceToken`  - ARN pointing to the lambda function implementing this resource 
 - `Version`  - optional, an opaque string to enforce the generation of a new secret.
 - `NoEcho` - indicates whether the secret can be an output value, default 'True' meaning it cannot.
+
+If you need to set a particular value to a SecureString parameter, you can specify:
+
+- `Content`  - the value of the parameter in the Parameter Store. If given, **no** randomized string will be generated (default `empty`)
 
 ## Return values
 With 'Fn::GetAtt' the following values are available:
