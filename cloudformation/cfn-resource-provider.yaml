@@ -58,7 +58,7 @@ Resources:
       Description: CloudFormation Custom:Secret implementation
       Code:
         S3Bucket: !Sub '${LambdaS3Bucket}-${AWS::Region}'
-        S3Key: lambdas/cfn-secret-provider-0.10.0.zip
+        S3Key: lambdas/cfn-secret-provider-0.10.1.zip
       FunctionName: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:binxio-cfn-secret-provider'
       Handler: secrets.handler
       MemorySize: 128
