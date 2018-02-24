@@ -29,8 +29,7 @@ request_schema = {
                      "description": "KMS key to use to encrypt the key"},
         "RefreshOnUpdate": {"type": "boolean", "default": False,
                             "description": "generate a new secret on update"},
-        "Version": {"type": "string",  "description": "opaque string to force update"},
-        "NoEcho": {"type": "boolean", "default": True, "description": "the secret as output parameter"}
+        "Version": {"type": "string",  "description": "opaque string to force update"}
     }
 }
 
@@ -130,7 +129,6 @@ class RSAKeyProvider(ResourceProvider):
             self.set_attribute('Version', version)
 
             self.physical_resource_id = self.arn
-            self.no_echo = self.get('NoEcho')
         except ClientError as e:
             self.physical_resource_id = 'could-not-create'
             self.fail(str(e))

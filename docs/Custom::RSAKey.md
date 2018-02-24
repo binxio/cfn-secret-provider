@@ -31,7 +31,6 @@ You can specify the following properties:
 - `ServiceToken`  - ARN pointing to the lambda function implementing this resource 
 - `RefreshOnUpdate` - generate a new key on update, default false.
 - `Version`  - an opaque string to enforce the generation of a new secret 
-- `NoEcho` - indicates whether the secret can be an output value, default 'True'   
 
 ## Return values
 With 'Fn::GetAtt' the following values are available:
@@ -41,7 +40,6 @@ With 'Fn::GetAtt' the following values are available:
 - `Arn` - the AWS Resource name of the parameter
 - `Hash` - of the public key
 - `Version` - of the value in the store.
-- `NoEcho` - indicates whether the secret can be an output value, default 'True' meaning it cannot.   
 
 ### Caveat - Version usage
 Note that the input Version is just an opaque string to force an update of the key if RefreshOnUpdate is true, where as the returned Version attribute is the actual version of the parameter value in the store.

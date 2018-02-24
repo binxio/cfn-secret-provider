@@ -16,7 +16,7 @@ Resources:
       Status: Active
       ReturnSecret: true
       ReturnPassword: true
-      NoEcho: True
+      NoEcho: False
       ServiceToken: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:binxio-cfn-secret-provider'
 
   DBPassword:
@@ -27,6 +27,7 @@ Resources:
       Length: 30
       ReturnSecret: true
       Version: v1
+      NoEcho: False
       ServiceToken: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:binxio-cfn-secret-provider'
 
   PrivateKey:
@@ -34,6 +35,7 @@ Resources:
     Properties:
       Name: !Sub '/${AWS::StackName}/demo/private-key'
       Version: v1
+      NoEcho: False
       ServiceToken: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:binxio-cfn-secret-provider'
 
   KeyPair:
@@ -41,6 +43,7 @@ Resources:
     DependsOn: PrivateKey
     Properties:
       Name: !Sub '!{AWS::StackName}-custom-key-pair'
+      NoEcho: False
       PublicKeyMaterial: !GetAtt 'PrivateKey.PublicKey'
       ServiceToken: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:binxio-cfn-secret-provider'
 

@@ -18,8 +18,7 @@ To declare this entity in your AWS CloudFormation template, use the following sy
     "ServiceToken" : String,
     "RefreshOnUpdate": Boolean,
     "ReturnSecret": Boolean,
-    "Version": String,
-    "NoEcho": Boolean
+    "Version": String
   }
 }
 ```
