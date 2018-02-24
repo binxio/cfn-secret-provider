@@ -22,6 +22,10 @@ request_schema = {
                  "description": "the name of the private key in the parameters store"},
         "KeySize": {"type": "integer", "default": 2048,
                     "description": "number of bits in the key"},
+        "KeyFormat": {"type": "string",
+                   "enum": ["PKCS8", "TraditionalOpenSSL"],
+                   "default": "PKCS8",
+                   "description": "encoding type of the private key"},
         "Description": {"type": "string", "default": "",
                         "description": "the description of the key in the parameter store"},
         "KeyAlias": {"type": "string",
@@ -63,12 +67,24 @@ class RSAKeyProvider(ResourceProvider):
         m = re.match(arn_regexp, self.physical_resource_id)
         return m.group('name') if m is not None else None
 
+    @property
+    def key_format(self):
+        if self.get('KeyFormat', '') == 'TraditionalOpenSSL':
+            return crypto_serialization.PrivateFormat.TraditionalOpenSSL
+        else:
+            return crypto_serialization.PrivateFormat.PKCS8
+
     def get_key(self):
         response = self.ssm.get_parameter(Name=self.name_from_physical_resource_id(), WithDecryption=True)
         private_key = str(response['Parameter']['Value'])
 
         key = crypto_serialization.load_pem_private_key(
             private_key, password=None, backend=crypto_default_backend())
+
+        private_key = key.private_bytes(
+            crypto_serialization.Encoding.PEM,
+            self.key_format,
+            crypto_serialization.NoEncryption())
 
         public_key = key.public_key().public_bytes(
             crypto_serialization.Encoding.OpenSSH,
@@ -84,7 +100,7 @@ class RSAKeyProvider(ResourceProvider):
         )
         private_key = key.private_bytes(
             crypto_serialization.Encoding.PEM,
-            crypto_serialization.PrivateFormat.PKCS8,
+            self.key_format,
             crypto_serialization.NoEncryption())
 
         public_key = key.public_key().public_bytes(

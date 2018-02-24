@@ -1,5 +1,6 @@
 import sys
 import uuid
+import boto3
 import hashlib
 from cfn_rsakey_provider import RSAKeyProvider
 from secrets import handler
@@ -15,6 +16,7 @@ def test_defaults():
     assert r.is_valid_request()
     assert r.get('KeyAlias') == 'alias/aws/ssm'
     assert r.get('Description') == ''
+    assert r.get('KeyFormat') == 'PKCS8'
 
 
 def test_create():
@@ -83,6 +85,45 @@ def test_create_4096_key():
     request = Request('Delete', name, physical_resource_id)
     response = handler(request, {})
     assert response['Status'] == 'SUCCESS', response['Reason']
+
+def test_create_traditional_openssl_key():
+    # create a test parameter
+    provider = RSAKeyProvider()
+    name = '/test/parameter-%s' % uuid.uuid4()
+    request = Request('Create', name)
+    request['ResourceProperties']['Description'] = 'a key in openssl format'
+    request['ResourceProperties']['KeyFormat'] = 'TraditionalOpenSSL'
+    request['ResourceProperties']['ReturnSecret'] = True
+    response = provider.handle(request, {})
+    assert response['Status'] == 'SUCCESS', response['Reason']
+    physical_resource_id = response['PhysicalResourceId']
+    public_key = response['Data']['PublicKeyPEM']
+
+    # check that it is in openssl format
+    ssm = boto3.client('ssm')
+    kp = ssm.get_parameter(Name=name, WithDecryption=True)
+    private_key = kp['Parameter']['Value']
+    assert private_key.split('\n')[0] == '-----BEGIN RSA PRIVATE KEY-----'
+
+    # check it can reread the traditional form, and update back
+    request['RequestType'] = 'Update'
+    request['ResourceProperties']['KeyFormat'] = 'PKCS8'
+    request['PhysicalResourceId'] = physical_resource_id
+    response = provider.handle(request, {})
+    assert response['Status'] == 'SUCCESS', response['Reason']
+    assert public_key == response['Data']['PublicKeyPEM']
+
+    # check that it is in openssl format
+    ssm = boto3.client('ssm')
+    kp = ssm.get_parameter(Name=name, WithDecryption=True)
+    private_key = kp['Parameter']['Value']
+    assert private_key.split('\n')[0] == '-----BEGIN PRIVATE KEY-----'
+
+    # delete the parameter
+    request = Request('Delete', name, physical_resource_id)
+    response = handler(request, {})
+    assert response['Status'] == 'SUCCESS', response['Reason']
+
 
 
 def test_type_convert():

@@ -12,7 +12,8 @@ To declare this entity in your AWS CloudFormation template, use the following sy
   "Properties" : {
     "Name" : String,
     "KeyAlias" : String,
-    "KeySize": Integer
+    "KeySize": Integer,
+    "KeyFormat": String,
     "ServiceToken" : String,
     "Description": String,
     "RefreshOnUpdate": Boolean,
@@ -26,7 +27,8 @@ You can specify the following properties:
 
 - `Name`  - the name of the key in the Parameter Store (required)
 - `KeySize` - Size of the RSA key, defaults to 2048.
-- `KeyAlias`  - to use to encrypt the key (default `alias/aws/ssm`)
+- `KeyFormat` - 'PKCS8' or 'TraditionalOpenSSL', default 'PKCS8'
+- `KeyAlias`  - to use to encrypt the key (default 'alias/aws/ssm')
 - `Description`  - for the parameter in the store. (Default '')
 - `ServiceToken`  - ARN pointing to the lambda function implementing this resource 
 - `RefreshOnUpdate` - generate a new key on update, default false.
