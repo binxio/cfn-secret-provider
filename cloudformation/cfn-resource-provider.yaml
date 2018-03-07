@@ -62,5 +62,6 @@ Resources:
       FunctionName: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:binxio-cfn-secret-provider'
       Handler: secrets.handler
       MemorySize: 128
+      Timeout: 30
       Role: !GetAtt 'LambdaRole.Arn'
       Runtime: python2.7
