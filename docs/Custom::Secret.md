@@ -36,7 +36,7 @@ You can specify the following properties:
 - `RefreshOnUpdate`  - generate a new secret on update (Default 'false')
 - `ServiceToken`  - ARN pointing to the lambda function implementing this resource 
 - `Version`  - optional, an opaque string to enforce the generation of a new secret.
-- `NoEcho` - indicates whether the secret can be an output value, default 'True' meaning it cannot.
+- `NoEcho` - indicate whether output of the return values is replaced by `*****`, default True.
 
 If you need to set a particular value to a SecureString parameter, you can specify:
 
