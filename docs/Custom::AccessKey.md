@@ -28,7 +28,7 @@ Outputs:
         Value: !Ref AccessKey.SMTPPassword
 ```
 
-The access key id, access secret and the smtp password are stored in the parameter store under the paths `ParameterPath/aws_access_key_id`, `ParameterPath/aws_access_secret_key` and `ParameterPath/smtp_password` respectively. 
+The access key id, access secret and the smtp password are stored in the parameter store under the paths `<ParameterPath>/aws_access_key_id`, `<ParameterPath>/aws_access_secret_key` and `<ParameterPath>/smtp_password` respectively. 
 
 ## Properties
 You can specify the following properties:
