@@ -61,7 +61,7 @@ do-build: local-build
 
 local-build: src/*.py venv requirements.txt
 	mkdir -p target/content 
-	docker run -v $$PWD/target/content:/venv python:2.7 pip install --quiet -t /venv $$(<requirements.txt)
+	docker run -v $$PWD/target/content:/venv python:3.6 pip install --quiet -t /venv $$(<requirements.txt)
 	cp -r src/* target/content
 	find target/content -type d | xargs  chmod ugo+rx 
 	find target/content -type f | xargs  chmod ugo+r 
@@ -69,10 +69,10 @@ local-build: src/*.py venv requirements.txt
 	chmod ugo+r target/$(NAME)-$(VERSION).zip
 
 venv: requirements.txt
-	virtualenv venv  && \
+	virtualenv -p python3 venv  && \
 	. ./venv/bin/activate && \
-	pip --quiet install --upgrade pip && \
-	pip --quiet install -r requirements.txt 
+	pip3 --quiet install --upgrade pip && \
+	pip3 --quiet install -r requirements.txt 
 	
 clean:
 	rm -rf venv target src/*.pyc tests/*.pyc
