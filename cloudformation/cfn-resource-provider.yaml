@@ -28,6 +28,9 @@ Resources:
               - ssm:DeleteParameter
               - ec2:ImportKeyPair
               - ec2:DeleteKeyPair
+              - secretsmanager:DeleteSecret
+              - secretsmanager:CreateSecret
+              - secretsmanager:UpdateSecret
             Resource:
               - '*'
           - Effect: Allow
