@@ -1,0 +1,16 @@
+FROM python:3.6
+ARG ZIPFILE=lambda.zip
+RUN apt-get update && apt-get install -y zip
+WORKDIR /lambda
+
+ADD requirements.txt /tmp
+RUN pip install --quiet -t /lambda -r /tmp/requirements.txt
+
+ADD src/ /lambda/
+RUN python -m compileall -q /lambda
+RUN zip --quiet -9r /${ZIPFILE}  .
+
+FROM alpine:3.6
+ARG ZIPFILE
+RUN echo ${ZIPFILE}
+COPY --from=0 /${ZIPFILE} /
