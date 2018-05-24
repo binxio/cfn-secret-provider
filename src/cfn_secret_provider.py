@@ -1,13 +1,12 @@
-import os
-import re
-import time
-import string
+import boto3
 import hashlib
 import logging
-import boto3
-from random import choice
+import os
+import re
 from botocore.exceptions import ClientError
 from cfn_resource_provider import ResourceProvider
+from random import choice
+from past.builtins import basestring
 
 log = logging.getLogger()
 log.setLevel(os.environ.get("LOG_LEVEL", "INFO"))
@@ -33,8 +32,8 @@ request_schema = {
                              "default": "alias/aws/ssm",
                              "description": "KMS key to use to encrypt the value"},
                 "Content": {"type": "string",
-                             "default": "",
-                             "description": "Specific content to be stored as value. If given, no random value will be generated"},
+                            "default": "",
+                            "description": "Specific content to be stored as value. If given, no random value will be generated"},
                 "Length": {"type": "integer",  "minimum": 1, "maximum": 512,
                            "default": 30,
                            "description": "length of the secret"},
@@ -56,13 +55,13 @@ class SecretProvider(ResourceProvider):
 
     def convert_property_types(self):
         try:
-            if 'Length' in self.properties and isinstance(self.properties['Length'], (str, unicode,)):
+            if 'Length' in self.properties and isinstance(self.properties['Length'], basestring):
                 self.properties['Length'] = int(self.properties['Length'])
-            if 'ReturnSecret' in self.properties and isinstance(self.properties['ReturnSecret'], (str, unicode,)):
+            if 'ReturnSecret' in self.properties and isinstance(self.properties['ReturnSecret'], basestring):
                 self.properties['ReturnSecret'] = (self.properties['ReturnSecret'] == 'true')
-            if 'NoEcho' in self.properties and isinstance(self.properties['NoEcho'], (str, unicode,)):
+            if 'NoEcho' in self.properties and isinstance(self.properties['NoEcho'], basestring):
                 self.properties['NoEcho'] = (self.properties['NoEcho'] == 'true')
-            if 'RefreshOnUpdate' in self.properties and isinstance(self.properties['RefreshOnUpdate'], (str, unicode,)):
+            if 'RefreshOnUpdate' in self.properties and isinstance(self.properties['RefreshOnUpdate'], basestring):
                 self.properties['RefreshOnUpdate'] = (self.properties['RefreshOnUpdate'] == 'true')
         except ValueError as e:
             log.error('failed to convert property types %s', e)
@@ -96,7 +95,8 @@ class SecretProvider(ResourceProvider):
                 kwargs['Description'] = self.get('Description')
 
             if new_secret:
-                kwargs['Value'] = "".join(choice(self.get('Alphabet')) for x in range(0, self.get('Length'))) if self.get('Content') == "" else self.get('Content')
+                kwargs['Value'] = "".join(choice(self.get('Alphabet')) for x in range(
+                    0, self.get('Length'))) if self.get('Content') == "" else self.get('Content')
             else:
                 kwargs['Value'] = self.get_secret()
 
@@ -104,7 +104,7 @@ class SecretProvider(ResourceProvider):
             version = response['Version'] if 'Version' in response else 1
 
             self.set_attribute('Arn', self.arn)
-            self.set_attribute('Hash', hashlib.md5(kwargs['Value']).hexdigest())
+            self.set_attribute('Hash', hashlib.md5(kwargs['Value'].encode('utf8')).hexdigest())
             self.set_attribute('Version', version)
 
             if self.get('ReturnSecret'):
@@ -130,7 +130,7 @@ class SecretProvider(ResourceProvider):
         name = self.physical_resource_id.split('/', 1)
         if len(name) == 2:
             try:
-                response = self.ssm.delete_parameter(Name=name[1])
+                self.ssm.delete_parameter(Name=name[1])
             except ClientError as e:
                 if e.response["Error"]["Code"] != 'ParameterNotFound':
                     return self.fail(str(e))

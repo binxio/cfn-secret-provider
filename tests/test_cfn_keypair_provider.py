@@ -164,12 +164,12 @@ class KeyPair(object):
         self.private_key = self.key.private_bytes(
             crypto_serialization.Encoding.PEM,
             crypto_serialization.PrivateFormat.PKCS8,
-            crypto_serialization.NoEncryption())
+            crypto_serialization.NoEncryption()).decode('ascii')
 
         self.public_key = self.key.public_key().public_bytes(
             crypto_serialization.Encoding.OpenSSH,
             crypto_serialization.PublicFormat.OpenSSH
-        )
+        ).decode('ascii')
 
     @property
     def public_key_material(self):

@@ -122,10 +122,10 @@ class SecretsManagerSecretProvider(ResourceProvider):
             response = self.sm.update_secret(**args)
             self.set_return_attributes(response)
 
-            if self.get_old('Tags', self.get('Tags')) !=  self.get('Tags'):
+            if self.get_old('Tags', self.get('Tags')) != self.get('Tags'):
                 if len(self.get_old('Tags')) > 0:
                     self.sm.untag_resource(SecretId=self.physical_resource_id,
-                                       TagKeys=list(map(lambda t: t['Key'], self.get_old('Tags'))))
+                                           TagKeys=list(map(lambda t: t['Key'], self.get_old('Tags'))))
                 self.sm.tag_resource(SecretId=self.physical_resource_id, Tags=self.get('Tags'))
 
         except ClientError as e:
@@ -134,14 +134,14 @@ class SecretsManagerSecretProvider(ResourceProvider):
     def delete(self):
         if re.match(r'^arn:aws:secretsmanager:.*', self.physical_resource_id):
             try:
-                response = self.sm.delete_secret(SecretId=self.physical_resource_id,
-                                                 RecoveryWindowInDays=self.get('RecoveryWindowInDays'))
+                self.sm.delete_secret(SecretId=self.physical_resource_id,
+                                      RecoveryWindowInDays=self.get('RecoveryWindowInDays'))
                 self.success('Secret with the name %s is scheduled for deletion' % self.get('Name'))
             except ClientError as e:
                 if e.response["Error"]["Code"] != 'ResourceNotFoundException':
                     self.fail('{}'.format(e))
         else:
-            self.success('Delete request for secret with the name %s is ignored', self.get('Name'))
+            self.success('Delete request for secret with the name {} is ignored'.format(self.get('Name')))
 
 
 provider = SecretsManagerSecretProvider()

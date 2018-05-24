@@ -62,7 +62,7 @@ def create_secret(binary=False):
                       physical_resource_id=physical_resource_id)
     request['OldResourceProperties'] = {}
     request['OldResourceProperties']['Tags'] = request['ResourceProperties']['Tags']
-    request['ResourceProperties']['Tags'] = [ { 'Key': 'Group', 'Value': 'Admin'}]
+    request['ResourceProperties']['Tags'] = [{'Key': 'Group', 'Value': 'Admin'}]
     update_response = handler(request, {})
     assert update_response['Status'] == 'SUCCESS', response['Reason']
     assert update_response['PhysicalResourceId'] == physical_resource_id
@@ -84,6 +84,7 @@ def test_create_binary_secret():
 
 
 class Request(dict):
+
     def __init__(self, request_type, name, secret=None, binary_secret=None, physical_resource_id=None):
         self.update({
             'RequestType': request_type,

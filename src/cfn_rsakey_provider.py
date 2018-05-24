@@ -1,16 +1,12 @@
-import os
-import re
-import time
-import string
+import boto3
 import hashlib
 import logging
-import boto3
-from random import choice
+import re
 from botocore.exceptions import ClientError
 from cfn_resource_provider import ResourceProvider
+from cryptography.hazmat.backends import default_backend as crypto_default_backend
 from cryptography.hazmat.primitives import serialization as crypto_serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
-from cryptography.hazmat.backends import default_backend as crypto_default_backend
 
 log = logging.getLogger()
 
@@ -23,9 +19,9 @@ request_schema = {
         "KeySize": {"type": "integer", "default": 2048,
                     "description": "number of bits in the key"},
         "KeyFormat": {"type": "string",
-                   "enum": ["PKCS8", "TraditionalOpenSSL"],
-                   "default": "PKCS8",
-                   "description": "encoding type of the private key"},
+                      "enum": ["PKCS8", "TraditionalOpenSSL"],
+                      "default": "PKCS8",
+                      "description": "encoding type of the private key"},
         "Description": {"type": "string", "default": "",
                         "description": "the description of the key in the parameter store"},
         "KeyAlias": {"type": "string",
@@ -76,7 +72,7 @@ class RSAKeyProvider(ResourceProvider):
 
     def get_key(self):
         response = self.ssm.get_parameter(Name=self.name_from_physical_resource_id(), WithDecryption=True)
-        private_key = str(response['Parameter']['Value'])
+        private_key = response['Parameter']['Value'].encode('ascii')
 
         key = crypto_serialization.load_pem_private_key(
             private_key, password=None, backend=crypto_default_backend())
@@ -90,7 +86,7 @@ class RSAKeyProvider(ResourceProvider):
             crypto_serialization.Encoding.OpenSSH,
             crypto_serialization.PublicFormat.OpenSSH
         )
-        return (private_key, public_key)
+        return private_key.decode('ascii'), public_key.decode('ascii')
 
     def create_key(self):
         key = rsa.generate_private_key(
@@ -107,16 +103,18 @@ class RSAKeyProvider(ResourceProvider):
             crypto_serialization.Encoding.OpenSSH,
             crypto_serialization.PublicFormat.OpenSSH
         )
-        return (private_key, public_key)
+        return private_key.decode('ascii'), public_key.decode('ascii')
 
-    def public_key_to_pem(self, private_key, public_key):
+    def public_key_to_pem(self, private_key):
         key = crypto_serialization.load_pem_private_key(
-            private_key, password=None, backend=crypto_default_backend())
+            private_key.encode('ascii'), password=None, backend=crypto_default_backend())
 
-        return key.public_key().public_bytes(
+        public_key = key.public_key().public_bytes(
             crypto_serialization.Encoding.PEM,
             crypto_serialization.PublicFormat.SubjectPublicKeyInfo
         )
+
+        return public_key.decode('ascii')
 
     def create_or_update_secret(self, overwrite=False, new_secret=True):
         try:
@@ -140,8 +138,8 @@ class RSAKeyProvider(ResourceProvider):
 
             self.set_attribute('Arn', self.arn)
             self.set_attribute('PublicKey', public_key)
-            self.set_attribute('PublicKeyPEM', self.public_key_to_pem(private_key, public_key))
-            self.set_attribute('Hash', hashlib.md5(public_key).hexdigest())
+            self.set_attribute('PublicKeyPEM', self.public_key_to_pem(private_key))
+            self.set_attribute('Hash', hashlib.md5(public_key.encode('utf-8')).hexdigest())
             self.set_attribute('Version', version)
 
             self.physical_resource_id = self.arn
@@ -159,7 +157,7 @@ class RSAKeyProvider(ResourceProvider):
         name = self.physical_resource_id.split('/', 1)
         if len(name) == 2:
             try:
-                response = self.ssm.delete_parameter(Name=name[1])
+                self.ssm.delete_parameter(Name=name[1])
             except ClientError as e:
                 if e.response["Error"]["Code"] != 'ParameterNotFound':
                     return self.fail(str(e))

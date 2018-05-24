@@ -11,16 +11,16 @@ class DSAKeyProvider(RSAKeyProvider):
 
     def get_key(self):
         response = self.ssm.get_parameter(Name=self.name_from_physical_resource_id(), WithDecryption=True)
-        private_key = str(response['Parameter']['Value'])
+        private_key = response['Parameter']['Value']
 
         key = crypto_serialization.load_pem_private_key(
-            private_key, password=None, backend=crypto_default_backend())
+            private_key.encode('ascii'), password=None, backend=crypto_default_backend())
 
         public_key = key.public_key().public_bytes(
             crypto_serialization.Encoding.OpenSSH,
             crypto_serialization.PublicFormat.OpenSSH
         )
-        return (private_key, public_key)
+        return private_key, public_key.decode('ascii')
 
     def create_key(self):
         key = dsa.generate_private_key(
@@ -36,7 +36,7 @@ class DSAKeyProvider(RSAKeyProvider):
             crypto_serialization.Encoding.OpenSSH,
             crypto_serialization.PublicFormat.OpenSSH
         )
-        return (private_key, public_key)
+        return private_key.decode('ascii'), public_key.decode('ascii')
 
 
 provider = DSAKeyProvider()

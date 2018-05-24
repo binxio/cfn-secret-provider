@@ -37,10 +37,10 @@ def test_create():
     assert 'Hash' in response['Data']
     assert 'Version' in response['Data']
     assert response['Data']['Arn'] == physical_resource_id
-    assert response['Data']['Hash'] == hashlib.md5(response['Data']['PublicKey']).hexdigest()
+    assert response['Data']['Hash'] == hashlib.md5(response['Data']['PublicKey'].encode('ascii')).hexdigest()
     assert response['Data']['Version'] == 1
 
-    public_key = load_pem_public_key(response['Data']['PublicKeyPEM'], backend=default_backend())
+    public_key = load_pem_public_key(response['Data']['PublicKeyPEM'].encode('ascii'), backend=default_backend())
     assert public_key.key_size == 2048
 
     request['RequestType'] = 'Update'
@@ -48,7 +48,7 @@ def test_create():
     request['PhysicalResourceId'] = physical_resource_id
     response = provider.handle(request, {})
     assert response['Status'] == 'SUCCESS', response['Reason']
-    assert response['Data']['Hash'] == hashlib.md5(response['Data']['PublicKey']).hexdigest()
+    assert response['Data']['Hash'] == hashlib.md5(response['Data']['PublicKey'].encode('ascii')).hexdigest()
     assert response['Data']['Version'] == 2
 
     # delete the parameters
@@ -76,15 +76,16 @@ def test_create_4096_key():
     assert 'PublicKeyPEM' in response['Data']
     assert 'Hash' in response['Data']
     assert response['Data']['Arn'] == physical_resource_id
-    assert response['Data']['Hash'] == hashlib.md5(response['Data']['PublicKey']).hexdigest()
+    assert response['Data']['Hash'] == hashlib.md5(response['Data']['PublicKey'].encode('ascii')).hexdigest()
 
-    public_key = load_pem_public_key(response['Data']['PublicKeyPEM'], backend=default_backend())
+    public_key = load_pem_public_key(response['Data']['PublicKeyPEM'].encode('ascii'), backend=default_backend())
     assert public_key.key_size == 4096
 
     # delete the parameter
     request = Request('Delete', name, physical_resource_id)
     response = handler(request, {})
     assert response['Status'] == 'SUCCESS', response['Reason']
+
 
 def test_create_traditional_openssl_key():
     # create a test parameter
@@ -123,7 +124,6 @@ def test_create_traditional_openssl_key():
     request = Request('Delete', name, physical_resource_id)
     response = handler(request, {})
     assert response['Status'] == 'SUCCESS', response['Reason']
-
 
 
 def test_type_convert():

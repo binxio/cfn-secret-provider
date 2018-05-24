@@ -1,11 +1,7 @@
-import re
 import boto3
-import hashlib
 import logging
-import time
-import string
 import os
-from random import choice
+import re
 from botocore.exceptions import ClientError
 from cfn_resource_provider import ResourceProvider
 

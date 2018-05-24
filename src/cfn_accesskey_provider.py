@@ -1,12 +1,11 @@
-import re
-import logging
-import boto3
 import base64
-import hmac
+import boto3
 import hashlib
-import string
-from cfn_resource_provider import ResourceProvider
+import hmac
+import logging
+import re
 from botocore.exceptions import ClientError
+from cfn_resource_provider import ResourceProvider
 
 log = logging.getLogger(__name__)
 
@@ -69,30 +68,30 @@ class AccessKeyProvider(ResourceProvider):
         self.heuristic_convert_property_types(self.old_properties)
 
     def hash_secret(self, key):
-        message = "SendRawEmail"
-        version = '\x02'
-        h = hmac.new(key.encode('utf-8'), message, digestmod=hashlib.sha256)
-        return base64.b64encode("{0}{1}".format(version, h.digest()))
+        message = b"SendRawEmail"
+        result = bytearray(b'\x02')
+        result.extend(hmac.new(key.encode('utf-8'), message, digestmod=hashlib.sha256).digest())
+        return base64.b64encode(result).decode('ascii')
 
     def delete_access_key(self, access_key):
         try:
             self.iam.delete_access_key(UserName=access_key['UserName'], AccessKeyId=access_key['AccessKeyId'])
-        except self.iam.exceptions.NoSuchEntityException as e:
+        except self.iam.exceptions.NoSuchEntityException:
             log.info('no access key {AccessKeyId} was found for user {UserName}'.format(**access_key))
         except ClientError as e:
             self.fail('failed to delete access key, {}'.format(e))
 
     def create_access_key(self):
         access_key = None
+        user_name = self.get('UserName')
         try:
-            user_name = self.get('UserName')
             response = self.iam.create_access_key(UserName=user_name)
             access_key = response['AccessKey']
             self.iam.update_access_key(
                 UserName=user_name,
                 AccessKeyId=access_key['AccessKeyId'],
                 Status=self.get('Status'))
-        except ClientError as e:
+        except ClientError:
             if access_key is not None:
                 self.delete_access_key(access_key)
             self.fail('failed to create access key for user {}\n{}'.format(user_name, self.reason))
@@ -100,16 +99,16 @@ class AccessKeyProvider(ResourceProvider):
 
     @property
     def parameter_path(self):
-        return string.rstrip(self.get('ParameterPath'), '/ \t')
+        return self.get('ParameterPath').rstrip('/ \t')
 
     @property
     def old_parameter_path(self):
-        return string.rstrip(self.get_old('ParameterPath', self.get('ParameterPath')), '/ \t')
+        return self.get_old('ParameterPath', self.get('ParameterPath')).rstrip('/ \t')
 
     def check_parameter_path_exists(self):
         try:
             name = '{}'.format(self.get('ParameterPath'))
-            response = self.ssm.get_parameter(Name=name)
+            self.ssm.get_parameter(Name=name)
             self.fail('parameter {} already exists.'.format(name))
             return True
         except ClientError as e:
@@ -118,7 +117,7 @@ class AccessKeyProvider(ResourceProvider):
 
         try:
             name = '{}/aws_access_key_id'.format(self.get('ParameterPath'))
-            response = self.ssm.get_parameter(Name=name)
+            self.ssm.get_parameter(Name=name)
             self.fail('parameter {} already exists.'.format(name))
             return True
         except ClientError as e:
@@ -168,7 +167,7 @@ class AccessKeyProvider(ResourceProvider):
             result['SMTPPassword'] = response['Parameter']['Value']
             return result
         except self.ssm.exceptions.ParameterNotFound as e:
-            log.error('%s', e.message)
+            log.error('%s', e)
             return None
 
     def set_result_attributes(self, access_key):

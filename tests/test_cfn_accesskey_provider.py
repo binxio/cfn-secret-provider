@@ -265,7 +265,7 @@ def delete_all_resources():
     # delete all objects
     print (json.dumps(objects, indent=2))
     print (json.dumps(cfn_deleted, indent=2))
-    for physical_resource_id in objects.keys():
+    for physical_resource_id in list(objects.keys()):
         if physical_resource_id not in cfn_deleted:
             request = json.loads(json.dumps(objects[physical_resource_id]))
             request['PhysicalResourceId'] = physical_resource_id

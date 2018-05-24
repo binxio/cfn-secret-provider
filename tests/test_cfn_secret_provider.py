@@ -61,7 +61,7 @@ def test_create():
     assert 'Version' in response['Data']
     assert 'NoEcho' in response
     assert response['Data']['Arn'] == physical_resource_id
-    assert response['Data']['Hash'] == hashlib.md5(response['Data']['Secret']).hexdigest()
+    assert response['Data']['Hash'] == hashlib.md5(response['Data']['Secret'].encode('utf8')).hexdigest()
     assert response['Data']['Version'] == 1
     assert response['NoEcho'] == True
 
@@ -140,7 +140,7 @@ def test_update_secret():
     physical_resource_id = response['PhysicalResourceId']
     secret_1 = response['Data']['Secret']
     secure_hash = response['Data']['Hash']
-    assert secure_hash == hashlib.md5(secret_1).hexdigest()
+    assert secure_hash == hashlib.md5(secret_1.encode('utf8')).hexdigest()
 
     name_2 = 'k2%s' % name
     request = Request('Update', name_2, physical_resource_id)
@@ -231,7 +231,7 @@ def test_no_echo():
     assert response['NoEcho'] == True
     physical_resource_id = response['PhysicalResourceId']
 
-    #update NoEcho
+    # update NoEcho
     request['PhysicalResourceId'] = physical_resource_id
     request['ResourceProperties']['NoEcho'] = False
     request['RequestType'] = 'Update'
@@ -267,7 +267,7 @@ def test_create_with_content():
     assert 'Hash' in response['Data']
     assert 'Version' in response['Data']
     assert response['Data']['Arn'] == physical_resource_id
-    assert response['Data']['Hash'] == hashlib.md5(response['Data']['Secret']).hexdigest()
+    assert response['Data']['Hash'] == hashlib.md5(response['Data']['Secret'].encode('utf8')).hexdigest()
     assert response['Data']['Secret'] == secretContent
     assert response['Data']['Version'] == 1
 
