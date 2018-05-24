@@ -5,6 +5,9 @@ Parameters:
   LambdaS3Bucket:
     Type: String
     Default: 'binxio-public'
+  CFNCustomProviderZipFileName:
+    Type: String
+    Default: 'lambdas/cfn-secret-provider-latest.zip'
 Resources:
   LambdaPolicy:
     Type: AWS::IAM::Policy
@@ -58,7 +61,7 @@ Resources:
       Description: CloudFormation Custom:Secret implementation
       Code:
         S3Bucket: !Sub '${LambdaS3Bucket}-${AWS::Region}'
-        S3Key: lambdas/cfn-secret-provider-0.11.0.zip
+        S3Key: !Ref 'CFNCustomProviderZipFileName'
       FunctionName: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:binxio-cfn-secret-provider'
       Handler: secrets.handler
       MemorySize: 128
