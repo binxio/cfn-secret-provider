@@ -2,7 +2,7 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: CloudFormation Secret Provider
 Parameters:
-  LambdaS3Bucket:
+  S3BucketPrefix:
     Type: String
     Default: 'binxio-public'
   CFNCustomProviderZipFileName:
@@ -60,7 +60,7 @@ Resources:
     Properties:
       Description: CloudFormation Custom:Secret implementation
       Code:
-        S3Bucket: !Sub '${LambdaS3Bucket}-${AWS::Region}'
+        S3Bucket: !Sub '${S3BucketPrefix}-${AWS::Region}'
         S3Key: !Ref 'CFNCustomProviderZipFileName'
       FunctionName: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:binxio-cfn-secret-provider'
       Handler: secrets.handler
