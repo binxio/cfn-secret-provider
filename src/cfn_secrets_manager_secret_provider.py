@@ -132,7 +132,8 @@ class SecretsManagerSecretProvider(ResourceProvider):
             args = self.create_arguments()
             args['SecretId'] = self.physical_resource_id
             del args['Name']
-            del args['Tags']
+            if 'Tags' in args:
+                del args['Tags']
 
             response = self.sm.update_secret(**args)
             self.set_return_attributes(response)
