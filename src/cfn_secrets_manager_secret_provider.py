@@ -101,7 +101,6 @@ class SecretsManagerSecretProvider(ResourceProvider):
         return args
 
     def set_return_attributes(self, response):
-        self.set_attribute('VersionId', response['VersionId'])
         self.physical_resource_id = response['ARN']
         self.no_echo = self.get('NoEcho')
 
