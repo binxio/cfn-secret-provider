@@ -1,5 +1,4 @@
 FROM python:3.6
-ARG ZIPFILE=lambda.zip
 RUN apt-get update && apt-get install -y zip
 WORKDIR /lambda
 
@@ -13,9 +12,10 @@ RUN find /lambda -type d | xargs chmod ugo+rx && \
     find /lambda -type f | xargs chmod ugo+r
 
 RUN python -m compileall -q /lambda
+
+ARG ZIPFILE=lambda.zip
 RUN zip --quiet -9r /${ZIPFILE}  .
 
-FROM alpine:3.6
+FROM scratch
 ARG ZIPFILE
-RUN echo ${ZIPFILE}
 COPY --from=0 /${ZIPFILE} /
