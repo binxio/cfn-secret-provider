@@ -31,6 +31,7 @@ Resources:
               - secretsmanager:DeleteSecret
               - secretsmanager:CreateSecret
               - secretsmanager:UpdateSecret
+              - secretsmanager:RotateSecret
             Resource:
               - '*'
           - Effect: Allow
@@ -71,3 +72,9 @@ Resources:
       Timeout: 30
       Role: !GetAtt 'LambdaRole.Arn'
       Runtime: python3.6
+Outputs:
+  LambdaRoleARN:
+    Value: !GetAtt LambdaRole.Arn
+    Description: ARN of the IAM Role which the custom CFN provider will execute as
+    Export:
+      Name: !Sub "${AWS::StackName}-RoleARN"
