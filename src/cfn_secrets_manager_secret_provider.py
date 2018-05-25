@@ -105,20 +105,22 @@ class SecretsManagerSecretProvider(ResourceProvider):
         self.no_echo = self.get('NoEcho')
 
     def set_rotation_config(self):
-        args = {
-            'SecretId': self.get('Name'),
-            'RotationLambdaARN': self.get('LambdaARN'),
-            'RotationRules': {
-                'AutomaticallyAfterDays': self.get('Interval')
+        if self.get('LambdaARN') and self.get('Interval'):
+            args = {
+                'SecretId': self.get('Name'),
+                'RotationLambdaARN': self.get('LambdaARN'),
+                'RotationRules': {
+                    'AutomaticallyAfterDays': self.get('Interval')
+                }
             }
-        }
-        self.sm.rotate_secret(**args)
+            self.sm.rotate_secret(**args)
 
     def create(self):
         try:
             args = self.create_arguments()
             response = self.sm.create_secret(**args)
             self.set_return_attributes(response)
+            self.set_rotation_config()
         except ClientError as e:
             self.physical_resource_id = 'could-not-create'
             self.fail('{}'.format(e))
