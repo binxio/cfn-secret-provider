@@ -26,5 +26,6 @@ You can specify the following properties:
 With 'Fn::GetAtt' the following values are available:
 
 - `Arn` - the AWS Resource Name of the keypair.
+- `Name` - specified as the input key name pair.
 
 For more information about using Fn::GetAtt, see [Fn::GetAtt](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/intrinsic-function-reference-getatt.html).
