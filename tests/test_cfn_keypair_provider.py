@@ -54,7 +54,9 @@ def test_create_and_public():
 
     assert 'Data' in response
     assert 'Arn' in response['Data']
+    assert 'Name' in response['Data']
     assert response['Data']['Arn'] == physical_resource_id
+    assert response['Data']['Name'] == name
 
     finger_print_1 = get_finger_print(name)
     assert finger_print_1 is not None
@@ -63,11 +65,12 @@ def test_create_and_public():
     request = Request('Update', name, physical_resource_id, KeyPair().public_key_material)
     response = handler(request, {})
     assert response['Status'] == 'SUCCESS', response['Reason']
+    assert response['Data']['Name'] == name
 
     finger_print_2 = get_finger_print(name)
     assert finger_print_2 is not None
     assert finger_print_1 != finger_print_2
-
+    assert response['Data']['Name'] == name
     # delete the parameters
     request = Request('Delete', name, physical_resource_id)
     response = handler(request, {})
@@ -99,6 +102,7 @@ def test_update_name():
     assert response['Status'] == 'SUCCESS', response['Reason']
     assert 'PhysicalResourceId' in response
     physical_resource_id = response['PhysicalResourceId']
+    assert response['Data']['Name'] == name
 
     # update keypair name
     name_2 = 'k2%s' % name
@@ -106,6 +110,7 @@ def test_update_name():
     response = handler(request, {})
     assert response['Status'] == 'SUCCESS', response['Reason']
     assert 'PhysicalResourceId' in response
+    assert response['Data']['Name'] == name_2
 
     physical_resource_id_2 = response['PhysicalResourceId']
     assert physical_resource_id != physical_resource_id_2

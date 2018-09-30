@@ -52,6 +52,7 @@ class KeyPairProvider(ResourceProvider):
         try:
             self.ec2.import_key_pair(KeyName=self.get('Name'), PublicKeyMaterial=self.get('PublicKeyMaterial'))
             self.set_attribute('Arn', self.arn)
+            self.set_attribute('Name', self.get('Name'))
             self.physical_resource_id = self.arn
         except ClientError as e:
             self.physical_resource_id = 'could-not-create'
