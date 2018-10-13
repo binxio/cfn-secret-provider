@@ -17,17 +17,17 @@ help:
 
 deploy: target/$(NAME)-$(VERSION).zip
 	aws s3 --region $(AWS_REGION) \
+		cp cloudformation/cfn-resource-provider.yaml \
+		s3://$(S3_BUCKET_PREFIX)-$(AWS_REGION)/lambdas/$(NAME)-$(VERSION).yaml \
+ 		--acl public-read
+	aws s3 --region $(AWS_REGION) \
 		cp target/$(NAME)-$(VERSION).zip \
-		s3://$(S3_BUCKET_PREFIX)-$(AWS_REGION)/lambdas/$(NAME)-$(VERSION).zip
+		s3://$(S3_BUCKET_PREFIX)-$(AWS_REGION)/lambdas/$(NAME)-$(VERSION).zip \
+ 		--acl public-read
 	aws s3 --region $(AWS_REGION) cp \
 		s3://$(S3_BUCKET_PREFIX)-$(AWS_REGION)/lambdas/$(NAME)-$(VERSION).zip \
-		s3://$(S3_BUCKET_PREFIX)-$(AWS_REGION)/lambdas/$(NAME)-latest.zip
-	aws s3api --region $(AWS_REGION) \
-		put-object-acl --bucket $(S3_BUCKET_PREFIX)-$(AWS_REGION) \
-		--acl public-read --key lambdas/$(NAME)-$(VERSION).zip
-	aws s3api --region $(AWS_REGION) \
-		put-object-acl --bucket $(S3_BUCKET_PREFIX)-$(AWS_REGION) \
-		--acl public-read --key lambdas/$(NAME)-latest.zip
+		s3://$(S3_BUCKET_PREFIX)-$(AWS_REGION)/lambdas/$(NAME)-latest.zip \
+ 		--acl public-read
 
 deploy-all-regions: deploy
 	@for REGION in $(ALL_REGIONS); do \
@@ -35,17 +35,13 @@ deploy-all-regions: deploy
 		aws s3 --region $(AWS_REGION) \
 			cp  \
 			s3://$(S3_BUCKET_PREFIX)-$(AWS_REGION)/lambdas/$(NAME)-$(VERSION).zip \
-			s3://$(S3_BUCKET_PREFIX)-$$REGION/lambdas/$(NAME)-$(VERSION).zip; \
+			s3://$(S3_BUCKET_PREFIX)-$$REGION/lambdas/$(NAME)-$(VERSION).zip \
+			--acl public-read; \
 		aws s3 --region $$REGION \
 			cp  \
 			s3://$(S3_BUCKET_PREFIX)-$$REGION/lambdas/$(NAME)-$(VERSION).zip \
-			s3://$(S3_BUCKET_PREFIX)-$$REGION/lambdas/$(NAME)-latest.zip; \
-		aws s3api --region $$REGION \
-			put-object-acl --bucket $(S3_BUCKET_PREFIX)-$$REGION \
-			--acl public-read --key lambdas/$(NAME)-$(VERSION).zip; \
-		aws s3api --region $$REGION \
-			put-object-acl --bucket $(S3_BUCKET_PREFIX)-$$REGION \
-			--acl public-read --key lambdas/$(NAME)-latest.zip; \
+			s3://$(S3_BUCKET_PREFIX)-$$REGION/lambdas/$(NAME)-latest.zip \
+			--acl public-read; \
 	done
 		
 
