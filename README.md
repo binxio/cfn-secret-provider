@@ -25,7 +25,10 @@ After the deployment, a 30 character random string can be found in the EC Parame
 If you need to access the secret in your cloudformation module, you need to specify `ReturnSecret` and reference it as the attribute `Secret`.
 
 ```yaml
-        MasterUserPassword: !GetAtt "DBPassword.Secret"
+  Database:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      MasterUserPassword: !GetAtt 'DBPassword.Secret'
 ```
 
 ## How do I add a private key?
@@ -49,13 +52,13 @@ If you need to access the public key of the newly generated private key, you can
 you would use this in the [Custom::KeyPair](docs/Custom%3A%3AKeyPair.md) resource, to create a EC2 key pair:
 
 ```yaml
-	KeyPair:
-	  Type: Custom::KeyPair
-	  DependsOn: CustomPrivateKey
-	  Properties:
-	    Name: CustomKeyPair
-	    PublicKeyMaterial: !GetAtt 'PrivateKey.PublicKey'
-	    ServiceToken: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:binxio-cfn-secret-provider'
+       KeyPair:
+         Type: Custom::KeyPair
+         DependsOn: CustomPrivateKey
+         Properties:
+           Name: CustomKeyPair
+           PublicKeyMaterial: !GetAtt 'PrivateKey.PublicKey'
+           ServiceToken: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:binxio-cfn-secret-provider'
 ```
 This will create the ec2 key pair for you named `CustomKeyPair`, based on the generated private key. Now private key is securely stored in the EC2 Parameter Store and the public key can be used to gain access to specific EC2 instances. See [Amazon EC2 Key Pairs](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html) for more information.
 
@@ -65,9 +68,9 @@ To install these custom resources, type:
 
 ```sh
 aws cloudformation create-stack \
-	--capabilities CAPABILITY_IAM \
-	--stack-name cfn-secret-provider \
-	--template-body file://cloudformation/cfn-resource-provider.yaml
+       --capabilities CAPABILITY_IAM \
+       --stack-name cfn-secret-provider \
+       --template-body file://cloudformation/cfn-resource-provider.yaml
 
 aws cloudformation wait stack-create-complete  --stack-name cfn-secret-provider 
 ```
@@ -80,7 +83,7 @@ To install the simple sample of the Custom Resource, type:
 
 ```sh
 aws cloudformation create-stack --stack-name cfn-secret-provider-demo \
-	--template-body file://cloudformation/demo-stack.yaml
+       --template-body file://cloudformation/demo-stack.yaml
 aws cloudformation wait stack-create-complete  --stack-name cfn-secret-provider-demo
 ```
 
