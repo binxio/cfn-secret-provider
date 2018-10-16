@@ -9,60 +9,53 @@ stored in the EC2 parameter store and access to the secrets can be controlled th
 ## How do I generate a secret?
 It is quite easy: you specify a CloudFormation resource of the [Custom::Secret](docs/Custom%3A%3ASecret.md), as follows:
 
-```json
-  "Resources": {
-    "DBPassword": {
-      "Type": "Custom::Secret",
-      "Properties": {
-        "Name": "/demo/PGPASSWORD",
-        "KeyAlias": "alias/aws/ssm",
-        "Alphabet": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
-        "Length": 30,
-        "ReturnSecret": true,
-        "ServiceToken": { "Fn::Join": [ ":", [ "arn:aws:lambda", { "Ref": "AWS::Region" }, { "Ref": "AWS::AccountId" }, "function:binxio-cfn-secret-provider" ] ]
-        }
-      }
-    }
-  }
+```yaml
+  DBPassword:
+    Type: Custom::Secret
+    Properties:
+      Name: /demo/PGPASSWORD
+      KeyAlias: alias/aws/ssm
+      Alphabet: abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789
+      Length: 30
+      ReturnSecret: true
+      ServiceToken: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:binxio-cfn-secret-provider'
 ```
 After the deployment, a 30 character random string can be found in the EC Parameter Store with the name `/demo/PGPASSWORD`.
 
 If you need to access the secret in your cloudformation module, you need to specify `ReturnSecret` and reference it as the attribute `Secret`.
 
-```json
-        "MasterUserPassword": { "Fn::GetAtt": [ "DBPassword", "Secret" ]}
+```yaml
+        MasterUserPassword: !GetAtt "DBPassword.Secret"
 ```
 
 ## How do I add a private key?
 In the same manner you can specify a RSA private key as a CloudFormation resource of the [Custom::RSAKey](docs/Custom%3A%3ARSAKey.md):
 
-```json
-  "Resources": {
-    "PrivateKey": {
-      "Type": "Custom::RSAKey",
-      "Properties": {
-        "Name": "/demo/private-key",
-        "KeyAlias": "alias/aws/ssm",
-        "ServiceToken": { "Fn::Join": [ ":", [ "arn:aws:lambda", { "Ref": "AWS::Region" }, { "Ref": "AWS::AccountId" }, "function:binxio-cfn-secret-provider" ] ]
-        }
-      }
-    }
-  }
+```yaml
+  PrivateKey:
+    Type: Custom::RSAKey
+    Properties:
+      Name: /demo/private-key
+      KeyAlias: alias/aws/ssm
+      ServiceToken: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:binxio-cfn-secret-provider'
 ```
-After the deployment, a the newly generated private key can be found in the EC2 Parameter Store with the name `/demo/private-key`.
+After the deployment, a the newly generated private key can be found in the EC2 Parameter Store under the name `/demo/private-key`:
+
+```bash
+$ aws ssm get-parameter --name /demo/private-key --with-decryption --query Parameter.Value --output text
+```
 
 If you need to access the public key of the newly generated private key, you can reference it as the attribute `PublicKey`.  Most likely, 
 you would use this in the [Custom::KeyPair](docs/Custom%3A%3AKeyPair.md) resource, to create a EC2 key pair:
 
-```json
-    "KeyPair": {
-      "Type": "Custom::KeyPair",
-      "DependsOn": "CustomPrivateKey",
-      "Properties": {
-        "Name": "CustomKeyPair",
-        "PublicKeyMaterial": { "Fn::GetAtt": [ "PrivateKey", "PublicKey" ] },
-        "ServiceToken": { "Fn::Join": [ ":", [ "arn:aws:lambda", { "Ref": "AWS::Region" }, { "Ref": "AWS::AccountId" }, "function:binxio-cfn-secret-provider" ] ] }
-      }
+```yaml
+	KeyPair:
+	  Type: Custom::KeyPair
+	  DependsOn: CustomPrivateKey
+	  Properties:
+	    Name: CustomKeyPair
+	    PublicKeyMaterial: !GetAtt 'PrivateKey.PublicKey'
+	    ServiceToken: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:binxio-cfn-secret-provider'
 ```
 This will create the ec2 key pair for you named `CustomKeyPair`, based on the generated private key. Now private key is securely stored in the EC2 Parameter Store and the public key can be used to gain access to specific EC2 instances. See [Amazon EC2 Key Pairs](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html) for more information.
 
