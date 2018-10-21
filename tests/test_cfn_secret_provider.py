@@ -1,8 +1,12 @@
 import sys
+import boto3
 import hashlib
 import uuid
+from base64 import b64encode, b64decode
 from cfn_secret_provider import SecretProvider
 from secrets import handler
+
+kms = boto3.client('kms')
 
 
 def test_defaults():
@@ -275,6 +279,96 @@ def test_create_with_content():
     request = Request('Delete', name, physical_resource_id)
     response = handler(request, {})
     assert response['Status'] == 'SUCCESS', response['Reason']
+
+
+def get_kms_key():
+    for response in kms.get_paginator('list_aliases').paginate():
+        key_id = next(map(lambda a: a['TargetKeyId'], filter(lambda a: a['AliasName']
+                                                             == 'alias/cmk/parameters', response['Aliases'])), None)
+        if key_id:
+            return key_id
+
+    response = kms.create_key(Description='key for cfn-secret-provider')
+    key_id = response['KeyId']
+    response = kms.create_alias(Alias='alias/cmk/parameters', KeyId=key_id)
+    return key_id
+
+
+def encrypt_to_base64(secret):
+    key_id = get_kms_key()
+    response = kms.encrypt(KeyId='alias/cmk/parameters', Plaintext=secret.encode('utf8'))
+    return b64encode(response['CiphertextBlob']).decode('ascii')
+
+
+def test_create_with_encypted_content():
+    # create a test parameter with content value set
+    name = '/test/7-parameter-%s' % uuid.uuid4()
+    secret_content = 'Don\'t read my encrypted secret'
+    request = Request('Create', name)
+
+    encrypted_secret_content = encrypt_to_base64(secret_content)
+
+    request['ResourceProperties']['ReturnSecret'] = True
+    request['ResourceProperties']['Description'] = 'A encrypted custom secret'
+    request['ResourceProperties']['EncryptedContent'] = encrypted_secret_content
+    response = handler(request, {})
+    assert response['Status'] == 'SUCCESS', response['Reason']
+    assert 'PhysicalResourceId' in response
+    physical_resource_id = response['PhysicalResourceId']
+    assert isinstance(physical_resource_id, str)
+
+    assert 'Data' in response
+    assert 'Secret' in response['Data']
+    assert 'Arn' in response['Data']
+    assert 'Hash' in response['Data']
+    assert 'Version' in response['Data']
+    assert response['Data']['Arn'] == physical_resource_id
+    assert response['Data']['Hash'] == hashlib.md5(response['Data']['Secret'].encode('utf8')).hexdigest()
+    assert response['Data']['Secret'] == secret_content
+    assert response['Data']['Version'] == 1
+
+    secret_content = secret_content + " v2"
+    request['RequestType'] = 'Update'
+    request['PhysicalResourceId'] = physical_resource_id
+    request['ResourceProperties']['EncryptedContent'] = encrypt_to_base64(secret_content)
+    request['ResourceProperties']['RefreshOnUpdate'] = True
+    response = handler(request, {})
+    assert response['Status'] == 'SUCCESS', response['Reason']
+    assert 'PhysicalResourceId' in response
+    assert physical_resource_id == response['PhysicalResourceId']
+    assert response['Data']['Secret'] == secret_content
+    assert response['Data']['Version'] == 2
+
+    # delete the parameters
+    request = Request('Delete', name, physical_resource_id)
+    response = handler(request, {})
+    assert response['Status'] == 'SUCCESS', response['Reason']
+
+
+def test_create_with_bad_encrypted_values():
+    # create a test parameter with content value set
+    name = '/test/parameter-%s' % uuid.uuid4()
+    request = Request('Create', name)
+    request['ResourceProperties']['ReturnSecret'] = True
+    request['ResourceProperties']['Description'] = 'A encrypted custom secret'
+    request['ResourceProperties']['EncryptedContent'] = "Unencrypted secret here"
+    response = handler(request, {})
+    assert response['Status'] == 'FAILED', response['Reason']
+    assert response['Reason'].startswith('EncryptedContent is not base64 encoded')
+
+    request['ResourceProperties']['ReturnSecret'] = True
+    request['ResourceProperties']['Description'] = 'A encrypted custom secret'
+    request['ResourceProperties']['EncryptedContent'] = b64encode(b"not a KMS encrypted value here").decode('ascii')
+    response = handler(request, {})
+    assert response['Status'] == 'FAILED', response['Reason']
+    assert response['Reason'].startswith('An error occurred (InvalidCiphertextException)')
+
+    request['ResourceProperties']['ReturnSecret'] = True
+    request['ResourceProperties']['Content'] = 'A encrypted custom secret'
+    request['ResourceProperties']['EncryptedContent'] = b64encode(b"not a KMS encrypted value here").decode('ascii')
+    response = handler(request, {})
+    assert response['Status'] == 'FAILED', response['Reason']
+    assert response['Reason'].startswith('Specify either "Content" or "EncryptedContent"')
 
 
 class Request(dict):

@@ -3,10 +3,12 @@ import hashlib
 import logging
 import os
 import re
+import binascii
+from base64 import b64decode
 from botocore.exceptions import ClientError
 from cfn_resource_provider import ResourceProvider
-from random import choice
 from past.builtins import basestring
+from random import choice
 
 log = logging.getLogger()
 log.setLevel(os.environ.get("LOG_LEVEL", "INFO"))
@@ -14,32 +16,44 @@ log.setLevel(os.environ.get("LOG_LEVEL", "INFO"))
 
 request_schema = {
     "type": "object",
-            "required": ["Name"],
-            "properties": {
-                "Name": {"type": "string", "minLength": 1, "pattern": "[a-zA-Z0-9_/]+",
-                         "description": "the name of the value in the parameters store"},
-                "Description": {"type": "string", "default": "",
-                                "description": "the description of the value in the parameter store"},
-                "Alphabet": {"type": "string",
-                             "default": "abcdfghijklmnopqrstuvwyxzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_",
-                             "description": "the characters from which to generate the secret"},
-                "RefreshOnUpdate": {"type": "boolean", "default": False,
-                                    "description": "generate a new secret on update"},
-                "ReturnSecret": {"type": "boolean",
-                                 "default": False,
-                                 "description": "return secret as attribute 'Secret'"},
-                "KeyAlias": {"type": "string",
-                             "default": "alias/aws/ssm",
-                             "description": "KMS key to use to encrypt the value"},
-                "Content": {"type": "string",
-                            "default": "",
-                            "description": "Specific content to be stored as value. If given, no random value will be generated"},
-                "Length": {"type": "integer",  "minimum": 1, "maximum": 512,
-                           "default": 30,
-                           "description": "length of the secret"},
-                "Version": {"type": "string",  "description": "opaque string to force update"},
-                "NoEcho": {"type": "boolean",  "default": True, "description": "the secret as output parameter"}
-            }
+    "required": ["Name"],
+    "properties": {
+        "Name": {
+            "type": "string", "minLength": 1, "pattern": "[a-zA-Z0-9_/]+",
+            "description": "the name of the value in the parameters store"},
+        "Description": {
+            "type": "string", "default": "",
+            "description": "the description of the value in the parameter store"},
+        "Alphabet": {
+            "type": "string",
+            "default": "abcdfghijklmnopqrstuvwyxzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_",
+            "description": "the characters from which to generate the secret"},
+        "RefreshOnUpdate": {
+            "type": "boolean", "default": False,
+            "description": "generate a new secret on update"},
+        "ReturnSecret": {
+            "type": "boolean", "default": False,
+            "description": "return secret as attribute 'Secret'"},
+        "KeyAlias": {
+            "type": "string", "default": "alias/aws/ssm",
+            "description": "KMS key to use to encrypt the value"},
+        "Content": {
+            "type": "string",
+            "description": "Plain text secret, to be stored as is."},
+        "EncryptedContent": {
+            "type": "string",
+            "description": "base64 encoded KMS encrypted secret, decrypted before stored"
+        },
+        "Length": {
+            "type": "integer", "default": 30, "minimum": 1, "maximum": 512,
+            "description": "length of the secret"},
+        "Version": {
+            "type": "string",
+            "description": "opaque string to force update"},
+        "NoEcho": {
+            "type": "boolean", "default": True,
+            "description": "the secret as output parameter"}
+    }
 }
 
 
@@ -50,8 +64,24 @@ class SecretProvider(ResourceProvider):
         self._value = None
         self.request_schema = request_schema
         self.ssm = boto3.client('ssm')
+        self.kms = boto3.client('kms')
         self.region = boto3.session.Session().region_name
         self.account_id = (boto3.client('sts')).get_caller_identity()['Account']
+
+    def is_valid_request(self):
+        result = super(SecretProvider, self).is_valid_request()
+        if result and 'Content' in self.properties and 'EncryptedContent' in self.properties:
+            self.fail('Specify either "Content" or "EncryptedContent"')
+            result = False
+
+        if 'EncryptedContent' in self.properties:
+            try:
+                b64decode(self.get('EncryptedContent'))
+            except binascii.Error as e:
+                self.fail('EncryptedContent is not base64 encoded, {}'.format(e))
+                result = False
+
+        return result
 
     def convert_property_types(self):
         try:
@@ -63,7 +93,7 @@ class SecretProvider(ResourceProvider):
                 self.properties['NoEcho'] = (self.properties['NoEcho'] == 'true')
             if 'RefreshOnUpdate' in self.properties and isinstance(self.properties['RefreshOnUpdate'], basestring):
                 self.properties['RefreshOnUpdate'] = (self.properties['RefreshOnUpdate'] == 'true')
-        except ValueError as e:
+        except (binascii.Error, ValueError) as e:
             log.error('failed to convert property types %s', e)
 
     @property
@@ -82,6 +112,17 @@ class SecretProvider(ResourceProvider):
     def arn(self):
         return 'arn:aws:ssm:%s:%s:parameter/%s' % (self.region, self.account_id, self.get('Name'))
 
+    def get_content(self):
+        if 'EncryptedContent' in self.properties:
+            result = self.kms.decrypt(CiphertextBlob=b64decode(self.get('EncryptedContent')))
+            result = result['Plaintext'].decode('utf8')
+        elif 'Content' in self.properties:
+            result = self.get('Content')
+        else:
+            result = "".join(choice(self.get('Alphabet')) for _ in range(0, self.get('Length')))
+
+        return result
+
     def put_parameter(self, overwrite=False, new_secret=True):
         try:
             kwargs = {
@@ -95,8 +136,7 @@ class SecretProvider(ResourceProvider):
                 kwargs['Description'] = self.get('Description')
 
             if new_secret:
-                kwargs['Value'] = "".join(choice(self.get('Alphabet')) for x in range(
-                    0, self.get('Length'))) if self.get('Content') == "" else self.get('Content')
+                kwargs['Value'] = self.get_content()
             else:
                 kwargs['Value'] = self.get_secret()
 
@@ -112,8 +152,9 @@ class SecretProvider(ResourceProvider):
             self.no_echo = self.get('NoEcho')
 
             self.physical_resource_id = self.arn
-        except ClientError as e:
-            self.physical_resource_id = 'could-not-create'
+        except (TypeError, ClientError) as e:
+            if self.request_type == 'Create':
+                self.physical_resource_id = 'could-not-create'
             self.fail(str(e))
 
     def get_secret(self):
@@ -139,6 +180,7 @@ class SecretProvider(ResourceProvider):
         else:
             self.success('System Parameter with the name %s is ignored' %
                          self.physical_resource_id)
+
 
 provider = SecretProvider()
 

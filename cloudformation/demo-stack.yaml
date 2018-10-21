@@ -24,9 +24,10 @@ Resources:
     Properties:
       Name: !Sub '/${AWS::StackName}/demo/PGPASSWORD'
       Alphabet: abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_@#!
+      RefreshOnUpdate: false
       Length: 30
       ReturnSecret: true
-      Version: v1
+      Version: v2
       NoEcho: False
       ServiceToken: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:binxio-cfn-secret-provider'
 

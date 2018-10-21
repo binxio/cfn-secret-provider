@@ -18,8 +18,7 @@ Resources:
       PolicyDocument:
         Version: '2012-10-17'
         Statement:
-          - Effect: Allow
-            Action:
+          - Action:
               - iam:CreateAccessKey
               - iam:DeleteAccessKey
               - iam:UpdateAccessKey
@@ -31,17 +30,18 @@ Resources:
               - secretsmanager:DeleteSecret
               - secretsmanager:CreateSecret
               - secretsmanager:UpdateSecret
-            Resource:
-              - '*'
-          - Effect: Allow
-            Action:
-              - kms:Encrypt
+            Effect: Allow
             Resource:
               - '*'
           - Action:
-              - logs:*
-            Resource: arn:aws:logs:*:*:*
+              - kms:Decrypt
             Effect: Allow
+            Resource:
+              - !GetAtt 'Key.Arn'
+          - Action:
+              - logs:*
+            Effect: Allow
+            Resource: arn:aws:logs:*:*:*
       Roles:
         - !Ref 'LambdaRole'
   LambdaRole:
@@ -56,6 +56,29 @@ Resources:
             Principal:
               Service:
                 - lambda.amazonaws.com
+  Key:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: used for encryption of secrets in CloudFormation templates
+      Enabled: True
+      EnableKeyRotation: True
+      KeyPolicy:
+        Version: 2012-10-17
+        Id: 'enable iam permissions'
+        Statement:
+          - Sid: Enable IAM User Permissions
+            Effect: Allow
+            Principal:
+              AWS: !Sub 'arn:aws:iam::${AWS::AccountId}:root'
+            Action: kms:*
+            Resource: '*'
+
+  KeyAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: alias/cmk/cfn-secrets
+      TargetKeyId: !GetAtt 'Key.Arn'
+
   CFNSecretProvider:
     Type: AWS::Lambda::Function
     DependsOn:

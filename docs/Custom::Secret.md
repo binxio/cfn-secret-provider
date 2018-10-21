@@ -1,5 +1,6 @@
 # Custom::Secret
-The `Custom::Secret` resource creates a parameter in the Parameter Store with SecureString value containing an randomized string. You can also explicit set a value.
+The `Custom::Secret` resource creates a parameter in the Parameter Store with SecureString value containing an randomized string. 
+You can also explicit set a value in encrypted format.
 
 An existing parameter in the Parameter Store will not be overwritten.
 
@@ -16,6 +17,7 @@ To declare this entity in your AWS CloudFormation template, use the following sy
     "Length" : Integer,
     "KeyAlias" : String,
     "Content" : String,
+    "EncryptedContent" : String,
     "ServiceToken" : String,
     "RefreshOnUpdate": Boolean,
     "ReturnSecret": Boolean,
@@ -40,7 +42,8 @@ You can specify the following properties:
 
 If you need to set a particular value to a SecureString parameter, you can specify:
 
-- `Content`  - the value of the parameter in the Parameter Store. If given, **no** randomized string will be generated (default `empty`)
+- `EncryptedContent`  - Base64 encoded KMS encoded secret, to be decrypted before stored 
+- `Content`  - Plain text secret to be stored.
 
 ## Return values
 With 'Fn::GetAtt' the following values are available:
@@ -51,6 +54,7 @@ With 'Fn::GetAtt' the following values are available:
 - `Version` - of the value in the store.
 
 ### Caveat - Version usage
-Note that the input Version is just an opaque string to force an update of the key if RefreshOnUpdate is true, where as the returned Version attribute is the actual version of the parameter value in the store.
+Note that the input Version is just an opaque string to force an update of the key if RefreshOnUpdate is true, where 
+as the returned Version attribute is the actual version of the parameter value in the store.
 
 For more information about using Fn::GetAtt, see [Fn::GetAtt](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/intrinsic-function-reference-getatt.html).
