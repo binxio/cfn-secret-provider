@@ -1,6 +1,14 @@
 ---
 AWSTemplateFormatVersion: '2010-09-09'
 Description: Demo Custom CloudFormation Secret Provider
+Parameters:
+  ApiKey:
+    Description: encrypted api key
+    Type: String
+    Default: ''
+Conditions:
+  ApiKeySpecified: !Not [!Equals [!Ref ApiKey, '']]
+
 Resources:
   User:
     Type: AWS::IAM::User
@@ -48,6 +56,18 @@ Resources:
       PublicKeyMaterial: !GetAtt 'PrivateKey.PublicKey'
       ServiceToken: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:binxio-cfn-secret-provider'
 
+  APIKey:
+    Type: Custom::Secret
+    Condition: ApiKeySpecified
+    Properties:
+      Name: !Sub '${AWS::StackName}-api-key'
+      NoEcho: False
+      Length: 10
+      EncryptedContent: !Ref ApiKey
+      RefreshOnUpdate: true
+      ReturnSecret: true
+      ServiceToken: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:binxio-cfn-secret-provider'
+
 Outputs:
   Secret:
     Value: !GetAtt 'DBPassword.Secret'
@@ -73,3 +93,8 @@ Outputs:
   AccessSecretId:
     Value: !Ref 'AccessKey'
     Description: access secret id for the user
+
+  ApiKey:
+    Condition: ApiKeySpecified
+    Description: api key in clear text
+    Value: !GetAtt 'APIKey.Secret'
