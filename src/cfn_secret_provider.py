@@ -4,6 +4,7 @@ import logging
 import os
 import re
 import binascii
+import string
 from base64 import b64decode
 from botocore.exceptions import ClientError
 from cfn_resource_provider import ResourceProvider
@@ -26,7 +27,7 @@ request_schema = {
             "description": "the description of the value in the parameter store"},
         "Alphabet": {
             "type": "string",
-            "default": "abcdfghijklmnopqrstuvwyxzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_",
+            "default": string.ascii_letters + string.digits + "_",
             "description": "the characters from which to generate the secret"},
         "RefreshOnUpdate": {
             "type": "boolean", "default": False,
