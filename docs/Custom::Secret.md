@@ -45,6 +45,10 @@ If you need to set a particular value to a SecureString parameter, you can speci
 - `EncryptedContent`  - Base64 encoded KMS encoded secret, to be decrypted before stored 
 - `Content`  - Plain text secret to be stored.
 
+Note that if you specify `EncryptedContent` it is encrypted with the KMS key of your choice. The
+value is decrypted before storing it in the Parameter Store.  The SSM Parameter Store stores this decrypted value in encrypted form using the master key 
+specified by `KeyAlias`. Please use a different KMS key for the encryption the EncryptedContent.
+
 ## Return values
 With 'Fn::GetAtt' the following values are available:
 
