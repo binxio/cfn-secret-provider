@@ -2,7 +2,6 @@ import boto3
 import hashlib
 import logging
 import os
-import re
 import binascii
 import string
 from base64 import b64decode
@@ -10,6 +9,7 @@ from botocore.exceptions import ClientError
 from cfn_resource_provider import ResourceProvider
 from past.builtins import basestring
 from random import choice
+import ssm_parameter_name
 
 log = logging.getLogger()
 log.setLevel(os.environ.get("LOG_LEVEL", "INFO"))
@@ -102,16 +102,11 @@ class SecretProvider(ResourceProvider):
         return self.physical_resource_id == self.arn
 
     def name_from_physical_resource_id(self):
-        """
-        returns the name from the physical_resource_id as returned by self.arn, or None
-        """
-        arn_regexp = re.compile(r'arn:aws:ssm:(?P<region>[^:]*):(?P<account>[^:]*):parameter/(?P<name>.*)')
-        m = re.match(arn_regexp, self.physical_resource_id)
-        return m.group('name') if m is not None else None
+        return ssm_parameter_name.from_arn(self.physical_resource_id)
 
     @property
     def arn(self):
-        return 'arn:aws:ssm:%s:%s:parameter/%s' % (self.region, self.account_id, self.get('Name'))
+        return ssm_parameter_name.to_arn(self.region, self.account_id, self.get('Name'))
 
     def get_content(self):
         if 'EncryptedContent' in self.properties:
