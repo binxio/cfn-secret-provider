@@ -74,9 +74,9 @@ aws cloudformation create-stack \
 
 aws cloudformation wait stack-create-complete  --stack-name cfn-secret-provider 
 ```
-This CloudFormation template will use our pre-packaged provider from `s3://binxio-public-${AWS_REGION}/lambdas/cfn-secret-provider-0.13.2.zip`.
+This CloudFormation template will use our pre-packaged provider from `s3://binxio-public-${AWS_REGION}/lambdas/cfn-secret-provider-0.13.3.zip`.
 
-or use [![](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=eu-central-1#/stacks/new?stackName=cfn-secret-provider&templateURL=https://s3.amazonaws.com/binxio-public-eu-central-1/lambdas/cfn-secret-provider-0.13.2.yaml)
+or use [![](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=eu-central-1#/stacks/new?stackName=cfn-secret-provider&templateURL=https://s3.amazonaws.com/binxio-public-eu-central-1/lambdas/cfn-secret-provider-0.13.3.yaml)
 
 ## Demo
 To install the simple sample of the Custom Resource, type:

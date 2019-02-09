@@ -1,3 +1,3 @@
-release=0.13.2
-tag=v0.13.2
+release=0.13.3
+tag=v0.13.3
 pre_tag_command=sed -i '' -e 's^lambdas/cfn-secret-provider-[0-9]*\.[0-9]*\.[0-9]*[^\.]*\.^lambdas/cfn-secret-provider-@@RELEASE@@.^' README.md cloudformation/cfn-resource-provider.yaml
