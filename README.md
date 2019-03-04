@@ -7,7 +7,7 @@ to people and applications: This is not a good thing. With this Custom CloudForm
 stored in the EC2 parameter store and access to the secrets can be controlled through security policies.
 
 ## How do I generate a secret?
-It is quite easy: you specify a CloudFormation resource of the [Custom::Secret](docs/Custom%3A%3ASecret.md), as follows:
+It is quite easy: you specify a CloudFormation resource of the [Custom::Secret](docs/Secret.md), as follows:
 
 ```yaml
   DBPassword:
@@ -32,7 +32,7 @@ If you need to access the secret in your cloudformation module, you need to spec
 ```
 
 ## How do I add a private key?
-In the same manner you can specify a RSA private key as a CloudFormation resource of the [Custom::RSAKey](docs/Custom%3A%3ARSAKey.md):
+In the same manner you can specify a RSA private key as a CloudFormation resource of the [Custom::RSAKey](docs/RSAKey.md):
 
 ```yaml
   PrivateKey:
@@ -49,7 +49,7 @@ $ aws ssm get-parameter --name /demo/private-key --with-decryption --query Param
 ```
 
 If you need to access the public key of the newly generated private key, you can reference it as the attribute `PublicKey`.  Most likely, 
-you would use this in the [Custom::KeyPair](docs/Custom%3A%3AKeyPair.md) resource, to create a EC2 key pair:
+you would use this in the [Custom::KeyPair](docs/KeyPair.md) resource, to create a EC2 key pair:
 
 ```yaml
        KeyPair:
