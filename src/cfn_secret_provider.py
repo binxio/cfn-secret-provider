@@ -147,7 +147,9 @@ class SecretProvider(ResourceProvider):
                 self.set_attribute('Secret', kwargs['Value'])
             self.no_echo = self.get('NoEcho')
 
-            self.physical_resource_id = self.arn
+            if not ssm_parameter_name.equals(self.physical_resource_id, self.arn):
+                # prevent CFN deleting a resource with identical Arns in different formats.
+                self.physical_resource_id = self.arn
         except (TypeError, ClientError) as e:
             if self.request_type == 'Create':
                 self.physical_resource_id = 'could-not-create'
@@ -161,7 +163,7 @@ class SecretProvider(ResourceProvider):
         self.put_parameter(overwrite=False, new_secret=True)
 
     def update(self):
-        self.put_parameter(overwrite=(self.physical_resource_id == self.arn), new_secret=self.get('RefreshOnUpdate'))
+        self.put_parameter(overwrite=ssm_parameter_name.equals(self.physical_resource_id, self.arn), new_secret=self.get('RefreshOnUpdate'))
 
     def delete(self):
         name = self.physical_resource_id.split('/', 1)

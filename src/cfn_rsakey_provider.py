@@ -49,7 +49,7 @@ class RSAKeyProvider(ResourceProvider):
 
     @property
     def allow_overwrite(self):
-        return self.physical_resource_id == self.arn
+        return ssm_parameter_name.equals(self.physical_resource_id, self.arn)
 
     @property
     def arn(self):
@@ -137,7 +137,9 @@ class RSAKeyProvider(ResourceProvider):
             self.set_attribute('Hash', hashlib.md5(public_key.encode('utf-8')).hexdigest())
             self.set_attribute('Version', version)
 
-            self.physical_resource_id = self.arn
+            if not ssm_parameter_name.equals(self.physical_resource_id, self.arn):
+                # prevent CFN deleting a resource with identical Arns in different formats.
+                self.physical_resource_id = self.arn
         except ClientError as e:
             self.physical_resource_id = 'could-not-create'
             self.fail(str(e))

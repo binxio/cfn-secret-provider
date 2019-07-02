@@ -289,8 +289,8 @@ def get_kms_key():
             return key_id
 
     response = kms.create_key(Description='key for cfn-secret-provider')
-    key_id = response['KeyId']
-    response = kms.create_alias(Alias='alias/cmk/parameters', KeyId=key_id)
+    key_id = response['KeyMetadata']['KeyId']
+    response = kms.create_alias(AliasName='alias/cmk/parameters', TargetKeyId=key_id)
     return key_id
 
 
@@ -369,6 +369,29 @@ def test_create_with_bad_encrypted_values():
     response = handler(request, {})
     assert response['Status'] == 'FAILED', response['Reason']
     assert response['Reason'].startswith('Specify either "Content" or "EncryptedContent"')
+
+def test_unchanged_physical_resource_id():
+    name = 'k%s' % uuid.uuid4()
+    request = Request('Create', name)
+    request['ResourceProperties']['ReturnSecret'] = True
+    response = handler(request, {})
+    assert response['Status'] == 'SUCCESS', response['Reason']
+    assert 'PhysicalResourceId' in response
+    physical_resource_id = response['PhysicalResourceId']
+
+    old_style_physical_resource_id = physical_resource_id.split('/', 2)[0] + '//' + name
+    request = Request('Update', name, old_style_physical_resource_id)
+    request['ResourceProperties']['RefreshOnUpdate'] = True
+    request['ResourceProperties']['ReturnSecret'] = True
+    response = handler(request, {})
+    assert response['Status'] == 'SUCCESS', response['Reason']
+
+    assert old_style_physical_resource_id == response['PhysicalResourceId']
+
+    # delete secrets
+    request = Request('Delete', name, old_style_physical_resource_id)
+    response = handler(request, {})
+    assert response['Status'] == 'SUCCESS', response['Reason']
 
 
 class Request(dict):
