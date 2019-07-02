@@ -7,7 +7,7 @@ Parameters:
     Default: 'binxio-public'
   CFNCustomProviderZipFileName:
     Type: String
-    Default: 'lambdas/cfn-secret-provider-0.13.3.zip'
+    Default: 'lambdas/cfn-secret-provider-1.0.0.zip'
 Resources:
   LambdaPolicy:
     Type: AWS::IAM::Policy
@@ -93,4 +93,4 @@ Resources:
       MemorySize: 128
       Timeout: 30
       Role: !GetAtt 'LambdaRole.Arn'
-      Runtime: python3.6
+      Runtime: python3.7
