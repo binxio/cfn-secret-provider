@@ -109,6 +109,11 @@ demo:
                 --parameters \
                         ParameterKey=ApiKey,ParameterValue=$(shell ./encrypt-secret CD98BD30-F944-4FD9-B86D-3F67664FBAEB); \
 	aws cloudformation wait stack-$$COMMAND-complete  --stack-name $(NAME)-demo
+	docker build -t $(NAME)-demo -f Dockerfile.demo .
+	docker run -v  $(HOME)/.aws:/root/.aws \
+		-e AWS_REGION=$(shell aws configure get region) \
+		-e AWS_PROFILE=$${AWS_PROFILE:-default} \
+		$(NAME)-demo
 
 delete-demo:
 	aws cloudformation delete-stack --stack-name $(NAME)-demo
