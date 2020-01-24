@@ -41,6 +41,9 @@ You can specify the following properties:
 - `ReturnPassword`  - returns access id and SMTP password as attribute
 - `NoEcho` - indicate whether output of the return values is replaced by `*****`, default True.
 
+On update of `ParameterPath` the access key will be copied to the new path, but the old parameter will not
+be deleted. 
+
 ## Return values
 With 'Fn::GetAtt' the following values are available:
 

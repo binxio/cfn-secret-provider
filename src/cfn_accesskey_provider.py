@@ -106,23 +106,15 @@ class AccessKeyProvider(ResourceProvider):
         return self.get_old('ParameterPath', self.get('ParameterPath')).rstrip('/ \t')
 
     def check_parameter_path_exists(self):
-        try:
-            name = '{}'.format(self.get('ParameterPath'))
-            self.ssm.get_parameter(Name=name)
-            self.fail('parameter {} already exists.'.format(name))
-            return True
-        except ClientError as e:
-            if e.response["Error"]["Code"] != 'ParameterNotFound':
-                raise
-
-        try:
-            name = '{}/aws_access_key_id'.format(self.get('ParameterPath'))
-            self.ssm.get_parameter(Name=name)
-            self.fail('parameter {} already exists.'.format(name))
-            return True
-        except ClientError as e:
-            if e.response["Error"]["Code"] != 'ParameterNotFound':
-                raise
+        for suffix in [ '/aws_access_key_id', '/aws_secret_access_key', '/smtp_password']:
+            try:
+                name = f'{self.parameter_path}{suffix}'
+                self.ssm.get_parameter(Name=name)
+                self.fail('parameter {} already exists.'.format(name))
+                return True
+            except ClientError as e:
+                if e.response["Error"]["Code"] != 'ParameterNotFound':
+                    raise
 
         return False
 
@@ -142,18 +134,18 @@ class AccessKeyProvider(ResourceProvider):
                                Type='SecureString', Overwrite=True, KeyId=self.get('KeyAlias'),
                                Description='{} smtp password'.format(self.get('Description')))
 
-    def remove_from_parameter_store(self):
+    def remove_from_parameter_store(self, parameter_path):
         name = None
         for suffix in ['/aws_access_key_id', '/aws_secret_access_key', '/smtp_password']:
             try:
-                name = '{}{}'.format(self.parameter_path, suffix)
+                name = '{}{}'.format(parameter_path, suffix)
                 self.ssm.delete_parameter(Name=name)
             except ClientError as e:
                 if e.response["Error"]["Code"] != 'ParameterNotFound':
                     msg = 'failed to delete parameter {}, {}\n'.format(name, e)
                     self.reason = '{}{}'.format(self.reason, msg)
 
-    def get_from_parameter_store(self, parameter_path=None):
+    def get_from_parameter_store(self, parameter_path=None) -> dict:
         if parameter_path is None:
             parameter_path = self.parameter_path
 
@@ -203,15 +195,11 @@ class AccessKeyProvider(ResourceProvider):
             log.info('forcing new key due to new username\n')
             return True
 
-        if self.get('ParameterPath') != self.get_old('ParameterPath', self.get('ParameterPath')):
-            log.info('forcing new key due to new parameter path\n')
-            return True
-
         log.info('keeping existing key\n')
         return False
 
     def update(self):
-        if self.get_old('ParameterPath', self.get('ParameterPath')) != self.get('ParameterPath'):
+        if self.parameter_path != self.old_parameter_path:
             if self.check_parameter_path_exists():
                 return
 
@@ -228,11 +216,17 @@ class AccessKeyProvider(ResourceProvider):
             except ClientError as e:
                 self.fail('failed to update access key, {}'.format(e))
 
-            old_access_key = self.get_from_parameter_store()
+            old_access_key = self.get_from_parameter_store(self.old_parameter_path)
             if old_access_key is not None:
                 self.set_result_attributes(old_access_key)
             else:
-                self.fail('access key was not found under {}.'.format(self.parameter_path))
+                self.fail('access key was not found under {}.'.format(self.old_parameter_path))
+                return
+
+            if self.parameter_path != self.old_parameter_path:
+                self.put_in_parameter_store(old_access_key)
+                self.remove_from_parameter_store(self.old_parameter_path)
+
 
     def delete(self):
         if self.physical_resource_id == 'could-not-create':
@@ -247,13 +241,14 @@ class AccessKeyProvider(ResourceProvider):
 
         old_access_key = self.get_from_parameter_store()
         if old_access_key is not None and old_access_key['AccessKeyId'] == self.physical_resource_id:
-            self.remove_from_parameter_store()
+            self.remove_from_parameter_store(self.parameter_path)
         elif old_access_key is not None:
             msg = 'keeping parameters as the access key has changed.'
             self.response['Reason'] = '{}{}'.format(self.reason, msg)
         else:
             msg = 'no access key found under {}.'.format(self.parameter_path)
             self.response['Reason'] = '{}{}'.format(self.reason, msg)
+
 
 provider = AccessKeyProvider()
 

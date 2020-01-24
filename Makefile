@@ -15,35 +15,29 @@ help:
 	@echo 'make demo            - deploys the provider and the demo cloudformation stack.'
 	@echo 'make delete-demo     - deletes the demo cloudformation stack.'
 
+
 deploy: target/$(NAME)-$(VERSION).zip
 	aws s3 --region $(AWS_REGION) \
-		cp cloudformation/cfn-resource-provider.yaml \
-		s3://$(S3_BUCKET_PREFIX)-$(AWS_REGION)/lambdas/$(NAME)-$(VERSION).yaml \
- 		--acl public-read
+		cp --acl public-read \
+		target/$(NAME)-$(VERSION).zip \
+		s3://$(S3_BUCKET_PREFIX)-$(AWS_REGION)/lambdas/$(NAME)-$(VERSION).zip 
 	aws s3 --region $(AWS_REGION) \
-		cp target/$(NAME)-$(VERSION).zip \
+		cp --acl public-read \
 		s3://$(S3_BUCKET_PREFIX)-$(AWS_REGION)/lambdas/$(NAME)-$(VERSION).zip \
- 		--acl public-read
-	aws s3 --region $(AWS_REGION) cp \
-		s3://$(S3_BUCKET_PREFIX)-$(AWS_REGION)/lambdas/$(NAME)-$(VERSION).zip \
-		s3://$(S3_BUCKET_PREFIX)-$(AWS_REGION)/lambdas/$(NAME)-latest.zip \
- 		--acl public-read
+		s3://$(S3_BUCKET_PREFIX)-$(AWS_REGION)/lambdas/$(NAME)-latest.zip 
 
 deploy-all-regions: deploy
 	@for REGION in $(ALL_REGIONS); do \
 		echo "copying to region $$REGION.." ; \
-		aws s3 --region $(AWS_REGION) \
-			cp  \
-			s3://$(S3_BUCKET_PREFIX)-$(AWS_REGION)/lambdas/$(NAME)-$(VERSION).zip \
-			s3://$(S3_BUCKET_PREFIX)-$$REGION/lambdas/$(NAME)-$(VERSION).zip \
-			--acl public-read; \
 		aws s3 --region $$REGION \
-			cp  \
+			cp  --acl public-read \
+			s3://$(S3_BUCKET_PREFIX)-$(AWS_REGION)/lambdas/$(NAME)-$(VERSION).zip \
+			s3://$(S3_BUCKET_PREFIX)-$$REGION/lambdas/$(NAME)-$(VERSION).zip; \
+		aws s3 --region $$REGION \
+			cp  --acl public-read \
 			s3://$(S3_BUCKET_PREFIX)-$$REGION/lambdas/$(NAME)-$(VERSION).zip \
-			s3://$(S3_BUCKET_PREFIX)-$$REGION/lambdas/$(NAME)-latest.zip \
-			--acl public-read; \
+			s3://$(S3_BUCKET_PREFIX)-$$REGION/lambdas/$(NAME)-latest.zip; \
 	done
-		
 
 undeploy:
 	@for REGION in $(ALL_REGIONS); do \
@@ -66,49 +60,38 @@ target/$(NAME)-$(VERSION).zip: src/*.py requirements.txt
 		docker rm -f $$ID && \
 		chmod ugo+r target/$(NAME)-$(VERSION).zip
 
-venv: requirements.txt
-	virtualenv -p python3 venv  && \
-	. ./venv/bin/activate && \
-	pip3 --quiet install --upgrade pip && \
-	pip3 --quiet install -r requirements.txt
-	
 clean:
-	rm -rf venv target src/*.pyc tests/*.pyc
+	rm -rf target src/*.pyc tests/*.pyc
 
-test: venv
+Pipfile.lock: Pipfile requirements.txt test-requirements.txt
+	pipenv install -r requirements.txt
+	pipenv install -d -r test-requirements.txt
+
+test: Pipfile.lock
 	for n in ./cloudformation/*.yaml ; do aws cloudformation validate-template --template-body file://$$n ; done
-	. ./venv/bin/activate && \
-	pip --quiet install -r test-requirements.txt && \
-	cd src && \
-	PYTHONPATH=$(PWD)/src pytest ../tests/test*.py
+	PYTHONPATH=$(PWD)/src pipenv run pytest ./tests/test*.py
 
-autopep:
-	autopep8 --experimental --in-place --max-line-length 132 src/*.py tests/*.py
+fmt:
+	black src/*.py tests/*.py
 
-deploy-provider: COMMAND=$(shell if aws cloudformation get-template-summary --stack-name $(NAME) >/dev/null 2>&1; then \
-			echo update; else echo create; fi)
 deploy-provider: target/$(NAME)-$(VERSION).zip
-	aws cloudformation $(COMMAND)-stack \
+	aws cloudformation deploy \
                 --capabilities CAPABILITY_IAM \
                 --stack-name $(NAME) \
-                --template-body file://cloudformation/cfn-resource-provider.yaml \
-                --parameters \
-                        ParameterKey=S3BucketPrefix,ParameterValue=$(S3_BUCKET_PREFIX) \
-                        ParameterKey=CFNCustomProviderZipFileName,ParameterValue=lambdas/$(NAME)-$(VERSION).zip
-	aws cloudformation wait stack-$(COMMAND)-complete  --stack-name $(NAME)
+                --template-file ./cloudformation/cfn-resource-provider.yaml \
+                --parameter-overrides \
+                        S3BucketPrefix=$(S3_BUCKET_PREFIX) \
+                        CFNCustomProviderZipFileName=lambdas/$(NAME)-$(VERSION).zip
 
 delete-provider:
 	aws cloudformation delete-stack --stack-name $(NAME)
 	aws cloudformation wait stack-delete-complete  --stack-name $(NAME)
 
 demo:
-	COMMAND=$(shell if aws cloudformation get-template-summary --stack-name $(NAME)-demo >/dev/null 2>&1; then \
-			echo update; else echo create; fi) ; \
-	aws cloudformation $$COMMAND-stack --stack-name $(NAME)-demo \
-		--template-body file://cloudformation/demo-stack.yaml --capabilities CAPABILITY_NAMED_IAM \
-                --parameters \
-                        ParameterKey=ApiKey,ParameterValue=$(shell ./encrypt-secret CD98BD30-F944-4FD9-B86D-3F67664FBAEB); \
-	aws cloudformation wait stack-$$COMMAND-complete  --stack-name $(NAME)-demo
+	aws cloudformation deploy --stack-name $(NAME)-demo \
+		--template-file ./cloudformation/demo-stack.yaml --capabilities CAPABILITY_NAMED_IAM \
+                --parameter-overrides \
+                        ApiKey=$(shell ./encrypt-secret CD98BD30-F944-4FD9-B86D-3F67664FBAEB);
 	docker build -t $(NAME)-demo -f Dockerfile.demo .
 	docker run -v  $(HOME)/.aws:/root/.aws \
 		-e AWS_REGION=$(shell aws configure get region) \

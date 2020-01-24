@@ -3,6 +3,7 @@ import json
 import uuid
 import pytest
 import boto3
+from copy import copy
 from botocore.exceptions import ClientError
 from cfn_accesskey_provider import handler
 
@@ -229,6 +230,34 @@ def test_invalid_physical_resource_id():
     response = handler(request, {})
     assert response['Status'] == 'SUCCESS', response['Reason']
     assert response['Reason'] == 'physical resource id is not an access key id.'
+
+
+def test_rename_parameter_path():
+    name = 'test-{}'.format(uuid.uuid4())
+    parameter_path = '/{0}/{0}'.format(name)
+    create_user(name)
+    request = Request('Create', name, parameter_path)
+    request["ReturnSecret"] = "true"
+    request["ReturnPassword"] = "true"
+    response = fake_cfn(request, {})
+    assert response['Status'] == 'SUCCESS', response['Reason']
+    valid_state(request, response)
+
+    request["RequestType"] = "Update"
+    request["PhysicalResourceId"] = response["PhysicalResourceId"]
+    request["OldResourceProperties"] = copy(request["ResourceProperties"])
+    request["ResourceProperties"]["ParameterPath"] = f"{parameter_path}-2"
+
+    create_response = copy(response)
+    response = fake_cfn(request, {})
+    assert response['Status'] == 'SUCCESS', response['Reason']
+    valid_state(request, response)
+    assert create_response["Data"] == response["Data"]
+    assert create_response["PhysicalResourceId"] == response["PhysicalResourceId"]
+    response = ssm.get_parameters_by_path(WithDecryption=True, Path=f"{parameter_path}/", Recursive=True )
+    assert not response["Parameters"]
+    response = ssm.get_parameters_by_path(WithDecryption=True, Path=f"{parameter_path}-2/", Recursive=True )
+    assert len(response["Parameters"]) == 3
 
 
 def test_delete_non_existing_access_key():
