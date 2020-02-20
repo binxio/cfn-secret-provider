@@ -25,7 +25,7 @@ deploy: target/$(NAME)-$(VERSION).zip
 	aws s3 --region $(AWS_REGION) \
 		cp --acl public-read \
 		s3://$(S3_BUCKET)/lambdas/$(NAME)-$(VERSION).zip \
-		s3://$(S3-SOURCE_BUCKET)/lambdas/$(NAME)-latest.zip
+		s3://$(S3_BUCKET)/lambdas/$(NAME)-latest.zip
 
 deploy-all-regions: deploy
 	@for REGION in $(ALL_REGIONS); do \
