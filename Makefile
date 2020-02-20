@@ -3,6 +3,7 @@ include Makefile.mk
 NAME=cfn-secret-provider
 S3_BUCKET_PREFIX=binxio-public
 AWS_REGION=eu-central-1
+S3_BUCKET=$(S3_BUCKET_PREFIX)-$(AWS_REGION)
 ALL_REGIONS=$(shell printf "import boto3\nprint('\\\n'.join(map(lambda r: r['RegionName'], boto3.client('ec2').describe_regions()['Regions'])))\n" | python | grep -v '^$(AWS_REGION)$$')
 
 help:
@@ -20,22 +21,22 @@ deploy: target/$(NAME)-$(VERSION).zip
 	aws s3 --region $(AWS_REGION) \
 		cp --acl public-read \
 		target/$(NAME)-$(VERSION).zip \
-		s3://$(S3_BUCKET_PREFIX)-$(AWS_REGION)/lambdas/$(NAME)-$(VERSION).zip 
+		s3://$(S3_BUCKET)/lambdas/$(NAME)-$(VERSION).zip
 	aws s3 --region $(AWS_REGION) \
 		cp --acl public-read \
-		s3://$(S3_BUCKET_PREFIX)-$(AWS_REGION)/lambdas/$(NAME)-$(VERSION).zip \
-		s3://$(S3_BUCKET_PREFIX)-$(AWS_REGION)/lambdas/$(NAME)-latest.zip 
+		s3://$(S3_BUCKET)/lambdas/$(NAME)-$(VERSION).zip \
+		s3://$(S3-SOURCE_BUCKET)/lambdas/$(NAME)-latest.zip
 
 deploy-all-regions: deploy
 	@for REGION in $(ALL_REGIONS); do \
 		echo "copying to region $$REGION.." ; \
 		aws s3 --region $$REGION \
 			cp  --acl public-read \
-			s3://$(S3_BUCKET_PREFIX)-$(AWS_REGION)/lambdas/$(NAME)-$(VERSION).zip \
+			s3://$(S3_BUCKET)/lambdas/$(NAME)-$(VERSION).zip \
 			s3://$(S3_BUCKET_PREFIX)-$$REGION/lambdas/$(NAME)-$(VERSION).zip; \
 		aws s3 --region $$REGION \
 			cp  --acl public-read \
-			s3://$(S3_BUCKET_PREFIX)-$$REGION/lambdas/$(NAME)-$(VERSION).zip \
+			s3://$(S3_BUCKET)/lambdas/$(NAME)-$(VERSION).zip \
 			s3://$(S3_BUCKET_PREFIX)-$$REGION/lambdas/$(NAME)-latest.zip; \
 	done
 

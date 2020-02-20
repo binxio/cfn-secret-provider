@@ -1,0 +1,12 @@
+version: 0.2
+env:
+  LAMBDA_BUCKET_PREFIX: binxio-public
+  LAMBDA_BUCKET_REGION: eu-central-1
+phases:
+  install:
+    runtime-versions:
+        docker: 18
+        python: 3.7
+  build:
+    commands:
+      - make S3_BUCKET_PREFIX=${LAMBDA_BUCKET_PREFIX} AWS_REGION=${LAMBDA_BUCKET_REGION} deploy
