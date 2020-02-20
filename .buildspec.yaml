@@ -1,7 +1,8 @@
 version: 0.2
 env:
-  LAMBDA_BUCKET_PREFIX: binxio-public
-  LAMBDA_BUCKET_REGION: eu-central-1
+  variables:
+    LAMBDA_BUCKET_PREFIX: binxio-public
+    LAMBDA_BUCKET_REGION: eu-central-1
 phases:
   install:
     runtime-versions:
