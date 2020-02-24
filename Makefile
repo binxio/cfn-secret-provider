@@ -20,6 +20,10 @@ help:
 deploy: target/$(NAME)-$(VERSION).zip
 	aws s3 --region $(AWS_REGION) \
 		cp --acl public-read \
+		cloudformation/cfn-resource-provider.yaml \
+		s3://$(S3_BUCKET)/lambdas/$(NAME)-$(VERSION).yaml
+	aws s3 --region $(AWS_REGION) \
+		cp --acl public-read \
 		target/$(NAME)-$(VERSION).zip \
 		s3://$(S3_BUCKET)/lambdas/$(NAME)-$(VERSION).zip
 	aws s3 --region $(AWS_REGION) \
