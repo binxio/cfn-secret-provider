@@ -162,8 +162,11 @@ class SecretProvider(ResourceProvider):
     def create(self):
         self.put_parameter(overwrite=False, new_secret=True)
 
+    def refresh_on_update(self):
+        return self.get('RefreshOnUpdate') or self.get('EncryptedContent')
+
     def update(self):
-        self.put_parameter(overwrite=ssm_parameter_name.equals(self.physical_resource_id, self.arn), new_secret=self.get('RefreshOnUpdate'))
+        self.put_parameter(overwrite=ssm_parameter_name.equals(self.physical_resource_id, self.arn), new_secret=self.refresh_on_update)
 
     def delete(self):
         name = self.physical_resource_id.split('/', 1)
