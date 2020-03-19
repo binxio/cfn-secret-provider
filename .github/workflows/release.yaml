@@ -1,0 +1,24 @@
+name: release
+on:
+  push:
+    tags:
+      - '*'
+jobs:
+  build:
+    name: snapshot
+    runs-on: ubuntu-latest
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.aws_access_key_id }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.aws_secret_access_key }}
+      AWS_DEFAULT_REGION: eu-central-1
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v1
+        with:
+          python-version: 3.7
+      - name: checkout
+        run: git fetch --prune --unshallow
+      - name: pipenv
+        run: pip install pipenv && pipenv sync -d 
+      - name: deploy all regions
+        run: make deploy-all-regions
