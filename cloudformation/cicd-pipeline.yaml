@@ -1,0 +1,88 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  S3BucketPrefix:
+    Type: String
+    Default: binxio-public
+
+Resources:
+  Project:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: cfn-secret-provider
+      Description: 'cfn-secret-provider builder'
+      ServiceRole: !Ref 'ProjectRole'
+      Artifacts:
+        Type: no_artifacts
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/standard:2.0
+        PrivilegedMode: true
+        EnvironmentVariables:
+          - Name: LAMBDA_BUCKET_PREFIX
+            Value: !Ref S3BucketPrefix
+            Type: PLAINTEXT
+          - Name: MAKE_TARGET
+            Value: deploy-all-regions
+            Type: PLAINTEXT
+      Source:
+        Type: GITHUB
+        Location: https://github.com/binxio/cfn-secret-provider.git
+        BuildSpec: .buildspec.yaml
+        GitCloneDepth: 0
+      Triggers:
+        FilterGroups:
+         -  - Type: EVENT
+              Pattern: PUSH
+            - Type: HEAD_REF
+              Pattern: "refs/tags/.*"
+        Webhook: true
+
+  ProjectRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Action: sts:AssumeRole
+            Principal:
+              Service: codebuild.amazonaws.com
+            Condition: {}
+      Path: /
+      Policies:
+        - PolicyName: CFNSecretProviderBuilder
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:ListObjects
+                  - s3:GetBucketLocation
+                Resource: 
+                  - !Sub 'arn:aws:s3:::${S3BucketPrefix}-*'
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:PutObjectAcl
+                Resource: 
+                  - !Sub 'arn:aws:s3:::${S3BucketPrefix}-*/lambdas/cfn-secret-provider-*'
+              - Effect: Allow
+                Action:
+                  - ec2:DescribeRegions
+                Resource: 
+                  - '*'
+              - Sid: CloudWatchLogsPolicy
+                Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource:
+                  - '*'
+
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/codebuild/${Project}'
+      RetentionInDays: 7
+
