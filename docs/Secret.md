@@ -7,23 +7,25 @@ An existing parameter in the Parameter Store will not be overwritten.
 ## Syntax
 To declare this entity in your AWS CloudFormation template, use the following syntax:
 
-```json
+```yaml
 {
-  "Type" : "Custom::Secret",
-  "Properties" : {
-    "Name" : String,
-    "Description" : String,
-    "Alphabet" : String,
-    "Length" : Integer,
-    "KeyAlias" : String,
-    "Content" : String,
-    "EncryptedContent" : String,
-    "ServiceToken" : String,
-    "RefreshOnUpdate": Boolean,
-    "ReturnSecret": Boolean,
+  "Type" : "Custom::Secret"
+  "Properties" :
+    "Name" : String
+    "Description" : String
+    "Alphabet" : String
+    "Required": 
+     - Count: integer
+       Alphabet: String
+    "Length" : Integer
+    "KeyAlias" : String
+    "Content" : String
+    "EncryptedContent" : String
+    "ServiceToken" : String
+    "RefreshOnUpdate": Boolean
+    "ReturnSecret": Boolean
     "Version": String
-  }
-}
+
 ```
 
 ## Properties
@@ -32,6 +34,7 @@ You can specify the following properties:
 - `Name`  - the name of the parameter in the Parameter Store (required)
 - `Description`  - for the parameter in the store. (Default '')
 - `Alphabet` - the alphabet of characters from which to generate a secret (defaults to ASCII letters, digits and punctuation characters)
+- `Required` - an array of required characters and their ccount in the generated secret
 - `Length`  - the length of the secret (default `30`)
 - `KeyAlias`  - to use to encrypt the string (default `alias/aws/ssm`)
 - `ReturnSecret`  - as an attribute. (Default 'false')

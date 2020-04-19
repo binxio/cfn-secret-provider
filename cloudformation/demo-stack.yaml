@@ -39,6 +39,25 @@ Resources:
       NoEcho: False
       ServiceToken: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:binxio-cfn-secret-provider'
 
+  UserPassword:
+    Type: Custom::Secret
+    Properties:
+      Name: !Sub '/iam-users/${AWS::StackName}-secret-user/password'
+      Alphabet: abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_@#!
+      Required:
+        - Alphabet: abcdefghijklmnopqrstuvwxyz
+          Count: 1
+        - Alphabet: ABCDEFGHIJKLMNOPQRSTUVWXYZ
+          Count: 1
+        - Alphabet: _@#!
+          Count: 1
+      RefreshOnUpdate: false
+      Length: 30
+      ReturnSecret: true
+      Version: v1
+      NoEcho: False
+      ServiceToken: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:binxio-cfn-secret-provider'
+
   PrivateKey:
     Type: Custom::RSAKey
     Properties:
@@ -72,6 +91,9 @@ Outputs:
   Secret:
     Value: !GetAtt 'DBPassword.Secret'
     Description: the generated secret, do expose this as Output Parameter in production
+  UserPassword:
+      Value: !GetAtt 'UserPassword.Secret'
+      Description: the generated user password, do expose this as Output Parameter in production
   Arn:
     Value: !GetAtt 'DBPassword.Arn'
     Description: ARN of the password in the Parameter Store
