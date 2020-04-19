@@ -8,6 +8,7 @@ ENV STACK_NAME=cfn-secret-provider-demo
 ENV API_KEY=ssm:///${STACK_NAME}-api-key
 ENV PGPASSWORD=ssm:///${STACK_NAME}/demo/PGPASSWORD
 
+ENV IAM_USER_PASSWORD=ssm:///iam-users/${STACK_NAME}-secret-user/password
 ENV AWS_ACCESS_KEY_ID=ssm:///iam-users/${STACK_NAME}-secret-user/aws_access_key_id
 ENV AWS_ACCESS_SECRET_KEY=ssm:///iam-users/${STACK_NAME}-secret-user/aws_secret_access_key
 ENV SMTP_PASSWORD=ssm:///iam-users/${STACK_NAME}-secret-user/smtp_password
