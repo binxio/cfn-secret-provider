@@ -8,24 +8,22 @@ An existing parameter in the Parameter Store will not be overwritten.
 To declare this entity in your AWS CloudFormation template, use the following syntax:
 
 ```yaml
-{
-  "Type" : "Custom::Secret"
-  "Properties" :
-    "Name" : String
-    "Description" : String
-    "Alphabet" : String
-    "Required": 
+  Type : Custom::Secret
+  Properties : 
+    Name : String
+    Description : String
+    Alphabet : String
+    Required: 
      - Count: integer
        Alphabet: String
-    "Length" : Integer
-    "KeyAlias" : String
-    "Content" : String
-    "EncryptedContent" : String
-    "ServiceToken" : String
-    "RefreshOnUpdate": Boolean
-    "ReturnSecret": Boolean
-    "Version": String
-
+    Length : Integer
+    KeyAlias : String
+    Content : String
+    EncryptedContent : String
+    ServiceToken : String
+    RefreshOnUpdate: Boolean
+    ReturnSecret: Boolean
+    Version: String
 ```
 
 ## Properties
