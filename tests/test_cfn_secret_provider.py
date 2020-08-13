@@ -73,6 +73,17 @@ def test_create():
     assert response["Data"]["Version"] == 1
     assert response["NoEcho"] == True
 
+    # no update the key
+    hash = response["Data"]["Hash"]
+    request["RequestType"] = "Update"
+    request["ResourceProperties"]["RefreshOnUpdate"] = False
+    request["PhysicalResourceId"] = physical_resource_id
+    response = handler(request, {})
+    assert response["Status"] == "SUCCESS", response["Reason"]
+    assert response["Data"]["Arn"] == physical_resource_id
+    assert response["Data"]["Version"] == 2
+    assert response["Data"]["Hash"] == hash
+
     # update the key
     hash = response["Data"]["Hash"]
     request["RequestType"] = "Update"
@@ -81,7 +92,7 @@ def test_create():
     response = handler(request, {})
     assert response["Status"] == "SUCCESS", response["Reason"]
     assert response["Data"]["Arn"] == physical_resource_id
-    assert response["Data"]["Version"] == 2
+    assert response["Data"]["Version"] == 3
     assert response["Data"]["Hash"] != hash
 
     response = handler(request, {})

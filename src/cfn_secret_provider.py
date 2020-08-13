@@ -242,7 +242,8 @@ class SecretProvider(ResourceProvider):
     def create(self):
         self.put_parameter(overwrite=False, new_secret=True)
 
-    def refresh_on_update(self):
+    @property
+    def refresh_on_update(self) -> bool:
         return self.get("RefreshOnUpdate") or self.get("EncryptedContent")
 
     def update(self):
