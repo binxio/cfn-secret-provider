@@ -8,6 +8,18 @@ class DSAKeyProvider(RSAKeyProvider):
     def __init__(self):
         super(DSAKeyProvider, self).__init__()
 
+    def public_key(self, key):
+        if key.key_size > 1024:
+            return key.public_key().public_bytes(
+                crypto_serialization.Encoding.PEM,
+                crypto_serialization.PublicFormat.SubjectPublicKeyInfo,
+            )
+        else:
+            return key.public_key().public_bytes(
+                crypto_serialization.Encoding.OpenSSH,
+                crypto_serialization.PublicFormat.OpenSSH,
+            )
+
     def get_key(self):
         response = self.ssm.get_parameter(
             Name=self.name_from_physical_resource_id(), WithDecryption=True
@@ -18,11 +30,7 @@ class DSAKeyProvider(RSAKeyProvider):
             private_key.encode("ascii"), password=None, backend=crypto_default_backend()
         )
 
-        public_key = key.public_key().public_bytes(
-            crypto_serialization.Encoding.OpenSSH,
-            crypto_serialization.PublicFormat.OpenSSH,
-        )
-        return private_key, public_key.decode("ascii")
+        return private_key, self.public_key(key).decode("ascii")
 
     def create_key(self):
         key = dsa.generate_private_key(
@@ -34,11 +42,7 @@ class DSAKeyProvider(RSAKeyProvider):
             crypto_serialization.NoEncryption(),
         )
 
-        public_key = key.public_key().public_bytes(
-            crypto_serialization.Encoding.OpenSSH,
-            crypto_serialization.PublicFormat.OpenSSH,
-        )
-        return private_key.decode("ascii"), public_key.decode("ascii")
+        return private_key.decode("ascii"), self.public_key(key).decode("ascii")
 
 
 provider = DSAKeyProvider()

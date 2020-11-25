@@ -35,6 +35,7 @@ def test_create():
     assert "Hash" in response["Data"]
     assert "Version" in response["Data"]
     assert response["Data"]["Arn"] == physical_resource_id
+
     assert (
         response["Data"]["Hash"]
         == hashlib.md5(response["Data"]["PublicKey"].encode("ascii")).hexdigest()
@@ -58,6 +59,42 @@ def test_create():
     assert response["Data"]["Version"] == 2
 
     # delete the parameters
+    request = Request("Delete", name, physical_resource_id)
+    response = handler(request, {})
+    assert response["Status"] == "SUCCESS", response["Reason"]
+
+def test_create_1024_key():
+    # create a test parameter
+    provider = DSAKeyProvider()
+    name = "/test/parameter-%s" % uuid.uuid4()
+    request = Request("Create", name)
+    request["ResourceProperties"]["Description"] = "A large private key"
+    response = provider.handle(request, {})
+    assert response["Status"] == "SUCCESS", response["Reason"]
+    assert provider.is_valid_cfn_response(), response["Reason"]
+    assert "PhysicalResourceId" in response
+    physical_resource_id = response["PhysicalResourceId"]
+
+    assert "Data" in response
+    assert "Arn" in response["Data"]
+    assert "PublicKey" in response["Data"]
+    assert "PublicKeyPEM" in response["Data"]
+    assert response["Data"]["PublicKey"] != response["Data"]["PublicKeyPEM"]
+    assert response["Data"]["PublicKey"].startswith("ssh-dss ")
+
+    assert "Hash" in response["Data"]
+    assert response["Data"]["Arn"] == physical_resource_id
+    assert (
+        response["Data"]["Hash"]
+        == hashlib.md5(response["Data"]["PublicKey"].encode("ascii")).hexdigest()
+    )
+
+    public_key = load_pem_public_key(
+        response["Data"]["PublicKeyPEM"].encode("ascii"), backend=default_backend()
+    )
+    assert public_key.key_size == 1024
+
+    # delete the parameter
     request = Request("Delete", name, physical_resource_id)
     response = handler(request, {})
     assert response["Status"] == "SUCCESS", response["Reason"]
