@@ -72,13 +72,25 @@ class AccessKeyProvider(ResourceProvider):
         self.heuristic_convert_property_types(self.properties)
         self.heuristic_convert_property_types(self.old_properties)
 
+    def sign(self, key, msg):
+        return hmac.new(key, msg.encode('utf-8'), hashlib.sha256).digest()
+
     def hash_secret(self, key):
-        message = b"SendRawEmail"
-        result = bytearray(b"\x02")
-        result.extend(
-            hmac.new(key.encode("utf-8"), message, digestmod=hashlib.sha256).digest()
-        )
-        return base64.b64encode(result).decode("ascii")
+        # https://docs.aws.amazon.com/ses/latest/DeveloperGuide/smtp-credentials.html
+        date = "11111111"
+        service = "ses"
+        message = "SendRawEmail"
+        terminal = "aws4_request"
+        version = 0x04
+        
+        signature = self.sign(("AWS4" + key).encode('utf-8'), date)
+        signature = self.sign(signature, self.region)
+        signature = self.sign(signature, service)
+        signature = self.sign(signature, terminal)
+        signature = self.sign(signature, message)
+        signature_and_version = bytes([version]) + signature
+        smtp_password = base64.b64encode(signature_and_version)
+        return smtp_password.decode('utf-8')
 
     def delete_access_key(self, access_key):
         try:
