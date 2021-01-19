@@ -55,6 +55,10 @@ request_schema = {
             "default": True,
             "description": "the secrets as output parameter",
         },
+        "SMTPRegion": {
+            "type": "string",
+            "description": "to generate the SMTP password for",
+        },
     },
 }
 
@@ -72,25 +76,28 @@ class AccessKeyProvider(ResourceProvider):
         self.heuristic_convert_property_types(self.properties)
         self.heuristic_convert_property_types(self.old_properties)
 
+    @property
+    def smtp_region(self):
+        return self.get("SMTPRegion", self.region)
+
     def sign(self, key, msg):
-        return hmac.new(key, msg.encode('utf-8'), hashlib.sha256).digest()
+        return hmac.new(key, msg.encode("utf-8"), hashlib.sha256).digest()
 
     def hash_secret(self, key):
-        # https://docs.aws.amazon.com/ses/latest/DeveloperGuide/smtp-credentials.html
         date = "11111111"
         service = "ses"
         message = "SendRawEmail"
         terminal = "aws4_request"
         version = 0x04
-        
-        signature = self.sign(("AWS4" + key).encode('utf-8'), date)
-        signature = self.sign(signature, self.region)
+
+        signature = self.sign(("AWS4" + key).encode("utf-8"), date)
+        signature = self.sign(signature, self.smtp_region)
         signature = self.sign(signature, service)
         signature = self.sign(signature, terminal)
         signature = self.sign(signature, message)
         signature_and_version = bytes([version]) + signature
         smtp_password = base64.b64encode(signature_and_version)
-        return smtp_password.decode('utf-8')
+        return smtp_password.decode("utf-8")
 
     def delete_access_key(self, access_key):
         try:
@@ -230,6 +237,14 @@ class AccessKeyProvider(ResourceProvider):
             self.set_attribute(
                 "SMTPPassword", self.hash_secret(access_key["SecretAccessKey"])
             )
+
+        self.set_attribute(
+            "Hash",
+            hashlib.sha256(
+                self.hash_secret(access_key["SecretAccessKey"]).encode("utf8")
+            ).hexdigest(),
+        )
+
         self.no_echo = self.get("NoEcho")
 
     def create(self):

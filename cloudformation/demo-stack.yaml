@@ -91,15 +91,18 @@ Outputs:
   Secret:
     Value: !GetAtt 'DBPassword.Secret'
     Description: the generated secret, do expose this as Output Parameter in production
+
   UserPassword:
       Value: !GetAtt 'UserPassword.Secret'
       Description: the generated user password, do expose this as Output Parameter in production
   Arn:
     Value: !GetAtt 'DBPassword.Arn'
     Description: ARN of the password in the Parameter Store
+
   PublicKey:
     Value: !GetAtt 'PrivateKey.PublicKey'
     Description: the public key, safe to expose
+
   PrivateKeyArn:
     Value: !GetAtt 'PrivateKey.Arn'
     Description: ARN of the private key in the Parameter Store
@@ -107,6 +110,10 @@ Outputs:
   SMTPPassword:
     Value: !GetAtt 'AccessKey.SMTPPassword'
     Description: SMTP password for the user
+
+  Hash:
+    Value: !GetAtt 'AccessKey.Hash'
+    Description: Hash of the SMTP password for the user
 
   AccessSecretKey:
     Value: !GetAtt 'AccessKey.SecretAccessKey'

@@ -115,7 +115,7 @@ def valid_state(request, response):
     else:
         assert response["NoEcho"] == True
 
-
+    assert "Hash" in response.get("Data", {})
 objects = {}
 cfn_deleted = {}
 
@@ -179,11 +179,29 @@ def test_create():
     # update to obtain password
     request = Request("Update", name, parameter_path, response["PhysicalResourceId"])
     request["ResourceProperties"]["ReturnPassword"] = True
+    request["ResourceProperties"]["ReturnSecret"] = True
     request["ResourceProperties"]["NoEcho"] = False
     response = fake_cfn(request, {})
     assert response["Status"] == "SUCCESS", response["Reason"]
     valid_state(request, response)
     smtp_password = response["Data"]["SMTPPassword"]
+
+    # change the region
+    request = Request("Update", name, parameter_path, response["PhysicalResourceId"])
+    request["ResourceProperties"]["SMTPRegion"] = "eu-west-1"
+    request["ResourceProperties"]["ReturnPassword"] = True
+    request["ResourceProperties"]["ReturnSecret"] = True
+    new_response = fake_cfn(request, {})
+    assert new_response["Status"] == "SUCCESS", response["Reason"]
+    valid_state(request, new_response)
+
+    new_smtp_password = new_response["Data"]["SMTPPassword"]
+    assert response["PhysicalResourceId" ] == new_response["PhysicalResourceId"]
+    assert response["Data"]["SecretAccessKey" ] == new_response["Data"]["SecretAccessKey"]
+    assert smtp_password != new_smtp_password
+    assert response["Data"]["Hash"] != new_response["Data"]["Hash"]
+
+    # refresh the keys
 
     # refresh the keys
     request = Request("Update", name, parameter_path, response["PhysicalResourceId"])
