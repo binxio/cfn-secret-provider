@@ -25,6 +25,7 @@ Resources:
       ReturnSecret: true
       ReturnPassword: true
       NoEcho: False
+      SMTPRegion: eu-west-1
       ServiceToken: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:binxio-cfn-secret-provider'
 
   DBPassword:
