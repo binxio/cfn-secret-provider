@@ -1,3 +1,4 @@
+---
 version: 0.2
 env:
   variables:
@@ -7,8 +8,18 @@ env:
 phases:
   install:
     runtime-versions:
-        docker: 18
-        python: 3.7
+      docker: 18
+      python: 3.7
   build:
     commands:
+      - >
+        apt-get install -y jq &&
+        (
+        cd /etc/docker &&
+        touch daemon.json &&
+        cp daemon.json daemon.json-  &&
+        jq '.["registry-mirrors"] = ["https://mirror.gcr.io"]' daemon.json- > daemon.json &&
+        ps -ef &&
+        service restart docker
+        )
       - make S3_BUCKET_PREFIX=${LAMBDA_BUCKET_PREFIX} AWS_REGION=${LAMBDA_BUCKET_REGION} ${MAKE_TARGET:-deploy}
