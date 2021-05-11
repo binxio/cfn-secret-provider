@@ -38,7 +38,7 @@ def delete_users():
             pass
 
 
-@pytest.yield_fixture(scope="session", autouse=True)
+@pytest.fixture(scope="session", autouse=True)
 def setup():
     yield
     delete_all_resources()
