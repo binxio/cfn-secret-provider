@@ -6,6 +6,7 @@ verify_ssl = true
 [dev-packages]
 awscli = "*"
 pytest = "*"
+black = "*"
 
 [packages]
 boto3 = ">=1.5.27"

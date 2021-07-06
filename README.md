@@ -82,8 +82,10 @@ or use [![](https://s3.amazonaws.com/cloudformation-examples/cloudformation-laun
 To install the simple sample of the Custom Resource, type:
 
 ```sh
-aws cloudformation create-stack --stack-name cfn-secret-provider-demo \
-       --template-body file://cloudformation/demo-stack.yaml
+aws cloudformation create-stack \
+    --capabilities CAPABILITY_NAMED_IAM \
+    --stack-name cfn-secret-provider-demo \
+    --template-body file://cloudformation/demo-stack.yaml
 aws cloudformation wait stack-create-complete  --stack-name cfn-secret-provider-demo
 ```
 

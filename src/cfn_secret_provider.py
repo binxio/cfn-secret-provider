@@ -1,3 +1,4 @@
+import base64
 import binascii
 import hashlib
 import logging
@@ -33,6 +34,11 @@ request_schema = {
             "type": "string",
             "default": "",
             "description": "the description of the value in the parameter store",
+        },
+        "Random": {
+            "type": "boolean",
+            "default": False,
+            "description": "generate random string base64-encoded of Length in bytes",
         },
         "Alphabet": {
             "type": "string",
@@ -118,6 +124,14 @@ class SecretProvider(ResourceProvider):
                 self.fail("EncryptedContent is not base64 encoded, {}".format(e))
                 result = False
 
+        if ("Random" in self.properties and self.properties["Random"]) and (
+            "Content" in self.properties or "EncryptedContent" in self.properties
+        ):
+            self.fail(
+                "Random is mutually exclusive with the Content and EncryptedContent options"
+            )
+            result = False
+
         if result and "Required" in self.properties:
             required_characters = sum(map(lambda r: r["Count"], self.get("Required")))
             if required_characters > self.get("Length"):
@@ -140,6 +154,10 @@ class SecretProvider(ResourceProvider):
                 self.properties["ReturnSecret"] = (
                     self.properties["ReturnSecret"] == "true"
                 )
+            if "Random" in self.properties and isinstance(
+                self.properties["Random"], basestring
+            ):
+                self.properties["Random"] = self.properties["Random"] == "true"
             if "NoEcho" in self.properties and isinstance(
                 self.properties["NoEcho"], basestring
             ):
@@ -182,6 +200,9 @@ class SecretProvider(ResourceProvider):
 
         return "".join(result)
 
+    def generate_random(self):
+        return base64.b64encode(os.urandom(self.properties["Length"])).decode("ascii")
+
     def get_content(self):
         if "EncryptedContent" in self.properties:
             result = self.kms.decrypt(
@@ -190,6 +211,8 @@ class SecretProvider(ResourceProvider):
             result = result["Plaintext"].decode("utf8")
         elif "Content" in self.properties:
             result = self.get("Content")
+        elif "Random" in self.properties and self.properties["Random"]:
+            result = self.generate_random()
         else:
             result = self.generate_password()
 

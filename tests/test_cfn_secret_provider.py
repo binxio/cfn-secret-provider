@@ -1,4 +1,3 @@
-import sys
 import boto3
 import hashlib
 import uuid
@@ -473,6 +472,98 @@ def test_generate_password():
     del request["ResourceProperties"]["Required"]
     password = provider.generate_password()
     assert len(password) == 30
+
+
+def test_create_with_random_default_length():
+    # create a test parameter with content value set
+    name = "/test/parameter-%s" % uuid.uuid4()
+    request = Request("Create", name)
+    request["ResourceProperties"]["ReturnSecret"] = True
+    request["ResourceProperties"]["Description"] = "A custom secret"
+    request["ResourceProperties"]["Random"] = True
+    response = handler(request, {})
+    assert response["Status"] == "SUCCESS", response["Reason"]
+    assert "PhysicalResourceId" in response
+    physical_resource_id = response["PhysicalResourceId"]
+    assert isinstance(physical_resource_id, str)
+
+    assert "Data" in response
+    assert "Secret" in response["Data"]
+    assert "Arn" in response["Data"]
+    assert "Hash" in response["Data"]
+    assert "Version" in response["Data"]
+    assert response["Data"]["Arn"] == physical_resource_id
+    assert (
+        response["Data"]["Hash"]
+        == hashlib.md5(response["Data"]["Secret"].encode("utf8")).hexdigest()
+    )
+    decoded = b64decode(response["Data"]["Secret"])
+    assert len(decoded) == 30  # default length
+    assert response["Data"]["Version"] == 1
+
+    # delete the parameters
+    request = Request("Delete", name, physical_resource_id)
+    response = handler(request, {})
+    assert response["Status"] == "SUCCESS", response["Reason"]
+
+
+def test_create_with_random_with_length():
+    # create a test parameter with content value set
+    name = "/test/parameter-%s" % uuid.uuid4()
+    request = Request("Create", name)
+    request["ResourceProperties"]["ReturnSecret"] = True
+    request["ResourceProperties"]["Description"] = "A custom secret"
+    request["ResourceProperties"]["Random"] = True
+    request["ResourceProperties"]["Length"] = 32
+    response = handler(request, {})
+    assert response["Status"] == "SUCCESS", response["Reason"]
+    assert "PhysicalResourceId" in response
+    physical_resource_id = response["PhysicalResourceId"]
+    assert isinstance(physical_resource_id, str)
+
+    assert "Data" in response
+    assert "Secret" in response["Data"]
+    assert "Arn" in response["Data"]
+    assert "Hash" in response["Data"]
+    assert "Version" in response["Data"]
+    assert response["Data"]["Arn"] == physical_resource_id
+    assert (
+        response["Data"]["Hash"]
+        == hashlib.md5(response["Data"]["Secret"].encode("utf8")).hexdigest()
+    )
+    decoded = b64decode(response["Data"]["Secret"])
+    assert len(decoded) == request["ResourceProperties"]["Length"]
+    assert response["Data"]["Version"] == 1
+
+    # delete the parameters
+    request = Request("Delete", name, physical_resource_id)
+    response = handler(request, {})
+    assert response["Status"] == "SUCCESS", response["Reason"]
+
+
+def test_create_with_random_invalid_request():
+    # create a test parameter with content value set
+    name = "/test/parameter-%s" % uuid.uuid4()
+    request = Request("Create", name)
+    request["ResourceProperties"]["ReturnSecret"] = True
+    request["ResourceProperties"]["Description"] = "A custom secret"
+    request["ResourceProperties"]["Random"] = True
+    request["ResourceProperties"]["Content"] = "test"
+
+    error_message = (
+        "Random is mutually exclusive with the Content and EncryptedContent options"
+    )
+
+    response = handler(request, {})
+    assert response["Status"] == "FAILED", response["Reason"]
+    assert response["Reason"] == error_message
+
+    del request["ResourceProperties"]["Content"]
+    request["ResourceProperties"]["EncryptedContent"] = "test"
+
+    response = handler(request, {})
+    assert response["Status"] == "FAILED", response["Reason"]
+    assert response["Reason"] == error_message
 
 
 class Request(dict):

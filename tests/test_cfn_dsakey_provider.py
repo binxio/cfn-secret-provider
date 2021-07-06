@@ -63,12 +63,15 @@ def test_create():
     response = handler(request, {})
     assert response["Status"] == "SUCCESS", response["Reason"]
 
+
 def test_create_1024_key():
     # create a test parameter
     provider = DSAKeyProvider()
     name = "/test/parameter-%s" % uuid.uuid4()
     request = Request("Create", name)
-    request["ResourceProperties"]["Description"] = "the largest private key with openssl public key"
+    request["ResourceProperties"][
+        "Description"
+    ] = "the largest private key with openssl public key"
     request["ResourceProperties"]["KeySize"] = "1024"
     response = provider.handle(request, {})
     assert response["Status"] == "SUCCESS", response["Reason"]

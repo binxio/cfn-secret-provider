@@ -59,6 +59,18 @@ Resources:
       NoEcho: False
       ServiceToken: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:binxio-cfn-secret-provider'
 
+  AESKey:
+    Type: Custom::Secret
+    Properties:
+      Name: !Sub '/${AWS::StackName}/demo/aes-key'
+      Random: true
+      Length: 32
+      RefreshOnUpdate: false
+      ReturnSecret: true
+      Version: v1
+      NoEcho: False
+      ServiceToken: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:binxio-cfn-secret-provider'
+
   PrivateKey:
     Type: Custom::RSAKey
     Properties:
@@ -107,6 +119,10 @@ Outputs:
   PrivateKeyArn:
     Value: !GetAtt 'PrivateKey.Arn'
     Description: ARN of the private key in the Parameter Store
+
+  AESKeyArn:
+    Value: !GetAtt 'AESKey.Arn'
+    Description: ARN of the random key in the Parameter Store
 
   SMTPPassword:
     Value: !GetAtt 'AccessKey.SMTPPassword'
