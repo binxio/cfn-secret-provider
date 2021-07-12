@@ -2,23 +2,23 @@ import boto3
 import hashlib
 import uuid
 from base64 import b64encode, b64decode
-from cfn_secret_provider import SecretProvider
+from cfn_random_bytes_provider import RandomBytesProvider
 from secrets import handler
-from collections import Counter
 
 kms = boto3.client("kms")
+
+default_length = 8
 
 
 def test_defaults():
     request = Request("Create", "abc")
-    r = SecretProvider()
+    r = RandomBytesProvider()
     r.set_request(request, {})
     assert r.is_valid_request()
-    assert r.get("Length") == 30
-    assert r.get("Alphabet") == r.request_schema["properties"]["Alphabet"]["default"]
     assert not r.get("ReturnSecret")
     assert r.get("KeyAlias") == "alias/aws/ssm"
     assert r.get("Description") == ""
+    assert r.get("Length") == default_length
     assert isinstance(r.get("NoEcho"), bool) and r.get("NoEcho")
 
 
@@ -27,14 +27,14 @@ def test_type_convert():
     request["ResourceProperties"]["Length"] = "62"
     request["ResourceProperties"]["ReturnSecret"] = "true"
     request["ResourceProperties"]["RefreshOnUpdate"] = "true"
-    r = SecretProvider()
+    r = RandomBytesProvider()
     r.set_request(request, {})
     assert r.is_valid_request()
     assert r.get("Length") == 62
     assert r.get("ReturnSecret")
 
     request["ResourceProperties"]["Length"] = "fouteboole62"
-    r = SecretProvider()
+    r = RandomBytesProvider()
     r.set_request(request, {})
     assert not r.is_valid_request()
 
@@ -60,6 +60,7 @@ def test_create():
 
     assert "Data" in response
     assert "Secret" in response["Data"]
+    assert len(b64decode(response["Data"]["Secret"])) == default_length
     assert "Arn" in response["Data"]
     assert "Hash" in response["Data"]
     assert "Version" in response["Data"]
@@ -75,6 +76,7 @@ def test_create():
     # no update the key
     hash = response["Data"]["Hash"]
     request["RequestType"] = "Update"
+    request["ResourceProperties"]["Length"] = "32"
     request["ResourceProperties"]["RefreshOnUpdate"] = False
     request["PhysicalResourceId"] = physical_resource_id
     response = handler(request, {})
@@ -82,17 +84,20 @@ def test_create():
     assert response["Data"]["Arn"] == physical_resource_id
     assert response["Data"]["Version"] == 2
     assert response["Data"]["Hash"] == hash
+    assert len(b64decode(response["Data"]["Secret"])) == default_length
 
     # update the key
     hash = response["Data"]["Hash"]
     request["RequestType"] = "Update"
     request["ResourceProperties"]["RefreshOnUpdate"] = True
+    request["ResourceProperties"]["Length"] = "32"
     request["PhysicalResourceId"] = physical_resource_id
     response = handler(request, {})
     assert response["Status"] == "SUCCESS", response["Reason"]
     assert response["Data"]["Arn"] == physical_resource_id
     assert response["Data"]["Version"] == 3
     assert response["Data"]["Hash"] != hash
+    assert len(b64decode(response["Data"]["Secret"])) == 32
 
     response = handler(request, {})
     # delete the parameters
@@ -159,6 +164,7 @@ def test_update_secret():
     secret_1 = response["Data"]["Secret"]
     secure_hash = response["Data"]["Hash"]
     assert secure_hash == hashlib.md5(secret_1.encode("utf8")).hexdigest()
+    assert len(b64decode(response["Data"]["Secret"])) == default_length
 
     name_2 = "k2%s" % name
     request = Request("Update", name_2, physical_resource_id)
@@ -265,152 +271,6 @@ def test_no_echo():
     assert response["Status"] == "SUCCESS", response["Reason"]
 
 
-def test_create_with_content():
-    # create a test parameter with content value set
-    name = "/test/6-parameter-%s" % uuid.uuid4()
-    secretContent = "Don't read my secret"
-    request = Request("Create", name)
-    request["ResourceProperties"]["ReturnSecret"] = True
-    request["ResourceProperties"]["Description"] = "A custom secret"
-    request["ResourceProperties"]["Content"] = secretContent
-    response = handler(request, {})
-    assert response["Status"] == "SUCCESS", response["Reason"]
-    assert "PhysicalResourceId" in response
-    physical_resource_id = response["PhysicalResourceId"]
-    assert isinstance(physical_resource_id, str)
-
-    assert "Data" in response
-    assert "Secret" in response["Data"]
-    assert "Arn" in response["Data"]
-    assert "Hash" in response["Data"]
-    assert "Version" in response["Data"]
-    assert response["Data"]["Arn"] == physical_resource_id
-    assert (
-        response["Data"]["Hash"]
-        == hashlib.md5(response["Data"]["Secret"].encode("utf8")).hexdigest()
-    )
-    assert response["Data"]["Secret"] == secretContent
-    assert response["Data"]["Version"] == 1
-
-    # delete the parameters
-    request = Request("Delete", name, physical_resource_id)
-    response = handler(request, {})
-    assert response["Status"] == "SUCCESS", response["Reason"]
-
-
-def get_kms_key():
-    for response in kms.get_paginator("list_aliases").paginate():
-        key_id = next(
-            map(
-                lambda a: a["TargetKeyId"],
-                filter(
-                    lambda a: a["AliasName"] == "alias/cmk/parameters",
-                    response["Aliases"],
-                ),
-            ),
-            None,
-        )
-        if key_id:
-            return key_id
-
-    response = kms.create_key(Description="key for cfn-secret-provider")
-    key_id = response["KeyMetadata"]["KeyId"]
-    response = kms.create_alias(AliasName="alias/cmk/parameters", TargetKeyId=key_id)
-    return key_id
-
-
-def encrypt_to_base64(secret):
-    key_id = get_kms_key()
-    response = kms.encrypt(
-        KeyId="alias/cmk/parameters", Plaintext=secret.encode("utf8")
-    )
-    return b64encode(response["CiphertextBlob"]).decode("ascii")
-
-
-def test_create_with_encypted_content():
-    # create a test parameter with content value set
-    name = "/test/7-parameter-%s" % uuid.uuid4()
-    secret_content = "Don't read my encrypted secret"
-    request = Request("Create", name)
-
-    encrypted_secret_content = encrypt_to_base64(secret_content)
-
-    request["ResourceProperties"]["ReturnSecret"] = True
-    request["ResourceProperties"]["Description"] = "A encrypted custom secret"
-    request["ResourceProperties"]["EncryptedContent"] = encrypted_secret_content
-    response = handler(request, {})
-    assert response["Status"] == "SUCCESS", response["Reason"]
-    assert "PhysicalResourceId" in response
-    physical_resource_id = response["PhysicalResourceId"]
-    assert isinstance(physical_resource_id, str)
-
-    assert "Data" in response
-    assert "Secret" in response["Data"]
-    assert "Arn" in response["Data"]
-    assert "Hash" in response["Data"]
-    assert "Version" in response["Data"]
-    assert response["Data"]["Arn"] == physical_resource_id
-    assert (
-        response["Data"]["Hash"]
-        == hashlib.md5(response["Data"]["Secret"].encode("utf8")).hexdigest()
-    )
-    assert response["Data"]["Secret"] == secret_content
-    assert response["Data"]["Version"] == 1
-
-    secret_content = secret_content + " v2"
-    request["RequestType"] = "Update"
-    request["PhysicalResourceId"] = physical_resource_id
-    request["ResourceProperties"]["EncryptedContent"] = encrypt_to_base64(
-        secret_content
-    )
-    request["ResourceProperties"]["RefreshOnUpdate"] = True
-    response = handler(request, {})
-    assert response["Status"] == "SUCCESS", response["Reason"]
-    assert "PhysicalResourceId" in response
-    assert physical_resource_id == response["PhysicalResourceId"]
-    assert response["Data"]["Secret"] == secret_content
-    assert response["Data"]["Version"] == 2
-
-    # delete the parameters
-    request = Request("Delete", name, physical_resource_id)
-    response = handler(request, {})
-    assert response["Status"] == "SUCCESS", response["Reason"]
-
-
-def test_create_with_bad_encrypted_values():
-    # create a test parameter with content value set
-    name = "/test/parameter-%s" % uuid.uuid4()
-    request = Request("Create", name)
-    request["ResourceProperties"]["ReturnSecret"] = True
-    request["ResourceProperties"]["Description"] = "A encrypted custom secret"
-    request["ResourceProperties"]["EncryptedContent"] = "Unencrypted secret here"
-    response = handler(request, {})
-    assert response["Status"] == "FAILED", response["Reason"]
-    assert response["Reason"].startswith("EncryptedContent is not base64 encoded")
-
-    request["ResourceProperties"]["ReturnSecret"] = True
-    request["ResourceProperties"]["Description"] = "A encrypted custom secret"
-    request["ResourceProperties"]["EncryptedContent"] = b64encode(
-        b"not a KMS encrypted value here"
-    ).decode("ascii")
-    response = handler(request, {})
-    assert response["Status"] == "FAILED", response["Reason"]
-    assert response["Reason"].startswith(
-        "An error occurred (InvalidCiphertextException)"
-    )
-
-    request["ResourceProperties"]["ReturnSecret"] = True
-    request["ResourceProperties"]["Content"] = "A encrypted custom secret"
-    request["ResourceProperties"]["EncryptedContent"] = b64encode(
-        b"not a KMS encrypted value here"
-    ).decode("ascii")
-    response = handler(request, {})
-    assert response["Status"] == "FAILED", response["Reason"]
-    assert response["Reason"].startswith(
-        'Specify either "Content" or "EncryptedContent"'
-    )
-
-
 def test_unchanged_physical_resource_id():
     name = "k%s" % uuid.uuid4()
     request = Request("Create", name)
@@ -435,45 +295,6 @@ def test_unchanged_physical_resource_id():
     assert response["Status"] == "SUCCESS", response["Reason"]
 
 
-def test_generate_password():
-    request = Request("Create", "abc")
-    request["ResourceProperties"]["Required"] = [
-        {"Count": 2, "Alphabet": "ABCDEFGHIJKLMNOPQRSTUVWXYZ"},
-        {"Count": 2, "Alphabet": "abcdefghijklmnopqrstuvwxyz"},
-        {"Count": 1, "Alphabet": "0123456789"},
-        {"Count": 1, "Alphabet": "!@#$%^&*()_+=-`~"},
-    ]
-    request["ResourceProperties"]["Length"] = 5
-    provider = SecretProvider()
-    provider.set_request(request, {})
-    assert not provider.is_valid_request()
-    assert (
-        provider.reason == "the length should at least exceed the 6 required characters"
-    )
-
-    request["ResourceProperties"]["Length"] = 6
-    password = provider.generate_password()
-    character_counts = Counter(password)
-    for r in request["ResourceProperties"]["Required"]:
-        filtered = list(
-            filter(lambda c: c[0] in r["Alphabet"], character_counts.items())
-        )
-        assert r["Count"] == sum(map(lambda c: c[1], filtered)), r["Alphabet"]
-
-    request["ResourceProperties"]["Length"] = 30
-    password = provider.generate_password()
-    character_counts = Counter(password)
-    for r in request["ResourceProperties"]["Required"]:
-        filtered = list(
-            filter(lambda c: c[0] in r["Alphabet"], character_counts.items())
-        )
-        assert sum(map(lambda c: c[1], filtered)) >= r["Count"], r["Alphabet"]
-
-    del request["ResourceProperties"]["Required"]
-    password = provider.generate_password()
-    assert len(password) == 30
-
-
 class Request(dict):
     def __init__(self, request_type, name, physical_resource_id=None):
         self.update(
@@ -482,7 +303,7 @@ class Request(dict):
                 "ResponseURL": "https://httpbin.org/put",
                 "StackId": "arn:aws:cloudformation:us-west-2:EXAMPLE/stack-name/guid",
                 "RequestId": "request-%s" % uuid.uuid4(),
-                "ResourceType": "Custom::Secret",
+                "ResourceType": "Custom::RandomBytes",
                 "LogicalResourceId": "MySecret",
                 "ResourceProperties": {"Name": name},
             }

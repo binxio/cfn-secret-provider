@@ -12,7 +12,6 @@ To declare this entity in your AWS CloudFormation template, use the following sy
   Properties : 
     Name : String
     Description : String
-    Random: Boolean
     Alphabet : String
     Required: 
      - Count: integer
@@ -32,7 +31,6 @@ You can specify the following properties:
 
 - `Name`  - the name of the parameter in the Parameter Store (required)
 - `Description`  - for the parameter in the store. (Default '')
-- `Random`  - generate a random string of `Length` bytes base64-encoded (Default: 'false')
 - `Alphabet` - the alphabet of characters from which to generate a secret (defaults to ASCII letters, digits and punctuation characters)
 - `Required` - an array of required characters and their ccount in the generated secret
 - `Length`  - the length of the secret (default `30`)
