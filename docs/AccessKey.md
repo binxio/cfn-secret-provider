@@ -22,15 +22,15 @@ Resources:
 Outputs:
     AccessKeyId:
         Value: !Ref AccessKey
-    AccessSecretKey:
-        Value: !Ref AccessKey.AccessSecretKey
+    SecretAccessKey:
+        Value: !GetAtt AccessKey.SecretAccessKey
     SMTPPassword:
-        Value: !Ref AccessKey.SMTPPassword
+        Value: !GetAtt AccessKey.SMTPPassword
     Hash:
-        Value: !Ref AccessKey.Hash
+        Value: !GetAtt AccessKey.Hash
 ```
 
-The access key id, access secret and the smtp password are stored in the parameter store under the paths `<ParameterPath>/aws_access_key_id`, `<ParameterPath>/aws_access_secret_key` and `<ParameterPath>/smtp_password` respectively. 
+The access key id, access secret and the smtp password are stored in the parameter store under the paths `<ParameterPath>/aws_access_key_id`, `<ParameterPath>/aws_secret_access_key` and `<ParameterPath>/smtp_password` respectively.
 
 ## Properties
 You can specify the following properties:
@@ -51,7 +51,7 @@ will be removed.
 With 'Fn::GetAtt' the following values are available:
 
 - `SMTPPassword` - the SMTP password based for the access key (if ReturnPassword is true).
-- `AccessSecretKey` - the secret part of the access key (if ReturnSecret is true).
+- `SecretAccessKey` - the secret part of the access key (if ReturnSecret is true).
 - `Hash` - a hash of the SMTP password to detect changes in the access key secret.
 
 For more information about using Fn::GetAtt, see [Fn::GetAtt](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/intrinsic-function-reference-getatt.html).
