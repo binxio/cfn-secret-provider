@@ -10,7 +10,6 @@ Parameters:
     Default: 'lambdas/cfn-secret-provider-1.4.4.zip'
   IAMPermissionBoundaryARN:
     Type: String
-    Default: !Ref 'AWS::NoValue'
 Resources:
   LambdaPolicy:
     Type: AWS::IAM::Policy
@@ -49,8 +48,8 @@ Resources:
         - !Ref 'LambdaRole'
   LambdaRole:
     Type: AWS::IAM::Role
-    PermissionsBoundary: !Ref 'IAMPermissionBoundaryARN'
     Properties:
+      PermissionsBoundary: !Ref 'IAMPermissionBoundaryARN'
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
