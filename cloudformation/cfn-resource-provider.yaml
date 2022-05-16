@@ -10,6 +10,7 @@ Parameters:
     Default: 'lambdas/cfn-secret-provider-1.4.4.zip'
   IAMPermissionBoundaryARN:
     Type: String
+    Default: ''
 Conditions:
   HasPermissionBoundary: !Not [!Equals [ !Ref IAMPermissionBoundaryARN, '' ]]
 Resources:
