@@ -8,6 +8,11 @@ Parameters:
   CFNCustomProviderZipFileName:
     Type: String
     Default: 'lambdas/cfn-secret-provider-1.4.4.zip'
+  IAMPermissionBoundaryARN:
+    Type: String
+    Default: ''
+Conditions:
+  HasPermissionBoundary: !Not [!Equals [ !Ref IAMPermissionBoundaryARN, '' ]]
 Resources:
   LambdaPolicy:
     Type: AWS::IAM::Policy
@@ -47,6 +52,7 @@ Resources:
   LambdaRole:
     Type: AWS::IAM::Role
     Properties:
+      PermissionsBoundary: !If [HasPermissionBoundary, !Ref IAMPermissionBoundaryARN, !Ref 'AWS::NoValue']
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
