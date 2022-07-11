@@ -154,7 +154,6 @@ class RSAKeyProvider(ResourceProvider):
             version = response["Version"] if "Version" in response else 1
 
             self.set_attribute("Arn", self.arn)
-            self.set_attribute("ParameterName", self.name_from_physical_resource_id())
             self.set_attribute("PublicKey", public_key)
             self.set_attribute("PublicKeyPEM", self.public_key_to_pem(private_key))
             self.set_attribute(
@@ -165,6 +164,9 @@ class RSAKeyProvider(ResourceProvider):
             if not ssm_parameter_name.equals(self.physical_resource_id, self.arn):
                 # prevent CFN deleting a resource with identical Arns in different formats.
                 self.physical_resource_id = self.arn
+
+            self.set_attribute("ParameterName", self.name_from_physical_resource_id())
+
         except ClientError as e:
             self.physical_resource_id = "could-not-create"
             self.fail(str(e))

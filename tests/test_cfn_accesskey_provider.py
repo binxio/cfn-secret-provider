@@ -117,6 +117,9 @@ def valid_state(request, response):
 
     assert "Hash" in response.get("Data", {})
 
+    assert "ParameterPath" in response["Data"]
+    assert response["Data"]["ParameterPath"] == name
+
 
 objects = {}
 cfn_deleted = {}

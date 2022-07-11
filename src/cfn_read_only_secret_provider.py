@@ -59,11 +59,11 @@ class ReadOnlySecretProvider(ResourceProvider):
         response = self.ssm.get_parameter(Name=self.get("Name"), WithDecryption=True)
         value = response["Parameter"]["Value"]
         self.set_attribute("Secret", value)
-        self.set_attribute("ParameterName", ssm_parameter_name.from_arn(self.arn))
         self.set_attribute("Version", response["Parameter"]["Version"])
         self.set_attribute("Hash", hashlib.md5(value.encode("utf8")).hexdigest())
         self.set_attribute("Arn", self.arn)
         self.physical_resource_id = self.arn
+        self.set_attribute("ParameterName", ssm_parameter_name.from_arn(self.arn))
         self.no_echo = True
 
     def create(self):

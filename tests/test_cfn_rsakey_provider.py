@@ -42,6 +42,8 @@ def test_create():
         == hashlib.md5(response["Data"]["PublicKey"].encode("ascii")).hexdigest()
     )
     assert response["Data"]["Version"] == 1
+    assert "ParameterName" in response["Data"]
+    assert response["Data"]["ParameterName"] == name
 
     public_key = load_pem_public_key(
         response["Data"]["PublicKeyPEM"].encode("ascii"), backend=default_backend()
@@ -58,8 +60,11 @@ def test_create():
         == hashlib.md5(response["Data"]["PublicKey"].encode("ascii")).hexdigest()
     )
     assert response["Data"]["Version"] == 2
+    assert "ParameterName" in response["Data"]
+    assert response["Data"]["ParameterName"] == name
 
-    # delete the parameters
+
+# delete the parameters
     request = Request("Delete", name, physical_resource_id)
     response = handler(request, {})
     assert response["Status"] == "SUCCESS", response["Reason"]
@@ -182,6 +187,9 @@ def test_update_name():
     assert response["Status"] == "SUCCESS", response["Reason"]
     assert "PhysicalResourceId" in response
     assert "Data" in response and "Arn" in response["Data"]
+    assert "ParameterName" in response["Data"]
+    assert response["Data"]["ParameterName"] == name_2
+
     public_key_2 = response["Data"]["PublicKey"]
 
     physical_resource_id_2 = response["PhysicalResourceId"]

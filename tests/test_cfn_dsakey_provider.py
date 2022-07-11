@@ -35,6 +35,8 @@ def test_create():
     assert "Hash" in response["Data"]
     assert "Version" in response["Data"]
     assert response["Data"]["Arn"] == physical_resource_id
+    assert "ParameterName" in response["Data"]
+    assert response["Data"]["ParameterName"] == name
 
     assert (
         response["Data"]["Hash"]
@@ -183,6 +185,8 @@ def test_update_name():
     assert "PhysicalResourceId" in response
     assert "Data" in response and "Arn" in response["Data"]
     public_key_2 = response["Data"]["PublicKey"]
+    assert "ParameterName" in response["Data"]
+    assert response["Data"]["ParameterName"] == name_2
 
     physical_resource_id_2 = response["PhysicalResourceId"]
     assert physical_resource_id != physical_resource_id_2

@@ -72,6 +72,9 @@ def test_create():
     )
     assert response["Data"]["Version"] == 1
     assert response["NoEcho"] == True
+    assert "ParameterName" in response["Data"]
+    assert response["Data"]["ParameterName"] == name
+
 
     # no update the key
     hash = response["Data"]["Hash"]
@@ -139,6 +142,8 @@ def test_update_name():
     assert response["Status"] == "SUCCESS", response["Reason"]
     assert "PhysicalResourceId" in response
     assert "Data" in response and "Secret" in response["Data"]
+    assert "ParameterName" in response["Data"]
+    assert name_2 == response["Data"]["ParameterName"]
 
     physical_resource_id_2 = response["PhysicalResourceId"]
     assert physical_resource_id != physical_resource_id_2

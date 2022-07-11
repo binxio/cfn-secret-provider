@@ -219,7 +219,6 @@ class SecretProvider(ResourceProvider):
                 "Hash", hashlib.md5(kwargs["Value"].encode("utf8")).hexdigest()
             )
             self.set_attribute("Version", version)
-            self.set_attribute("ParameterName", self.name_from_physical_resource_id())
             if self.get("ReturnSecret"):
                 self.set_attribute("Secret", kwargs["Value"])
             self.no_echo = self.get("NoEcho")
@@ -227,6 +226,8 @@ class SecretProvider(ResourceProvider):
             if not ssm_parameter_name.equals(self.physical_resource_id, self.arn):
                 # prevent CFN deleting a resource with identical Arns in different formats.
                 self.physical_resource_id = self.arn
+
+            self.set_attribute("ParameterName", self.name_from_physical_resource_id())
         except (TypeError, ClientError) as e:
             if self.request_type == "Create":
                 self.physical_resource_id = "could-not-create"

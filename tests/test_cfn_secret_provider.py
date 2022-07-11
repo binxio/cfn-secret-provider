@@ -55,6 +55,7 @@ def test_create():
     response = handler(request, {})
     assert response["Status"] == "SUCCESS", response["Reason"]
     assert "PhysicalResourceId" in response
+
     physical_resource_id = response["PhysicalResourceId"]
     assert isinstance(physical_resource_id, str)
 
@@ -63,6 +64,9 @@ def test_create():
     assert "Arn" in response["Data"]
     assert "Hash" in response["Data"]
     assert "Version" in response["Data"]
+    assert "ParameterName" in response["Data"]
+    assert response["Data"]["ParameterName"] == name
+
     assert "NoEcho" in response
     assert response["Data"]["Arn"] == physical_resource_id
     assert (
@@ -126,6 +130,8 @@ def test_update_name():
     assert response["Status"] == "SUCCESS", response["Reason"]
     assert "PhysicalResourceId" in response
     physical_resource_id = response["PhysicalResourceId"]
+    assert "ParameterName" in response["Data"]
+    assert response["Data"]["ParameterName"] == name
 
     name_2 = "%s-2" % name
     request = Request("Update", name_2, physical_resource_id)
@@ -134,6 +140,8 @@ def test_update_name():
     assert response["Status"] == "SUCCESS", response["Reason"]
     assert "PhysicalResourceId" in response
     assert "Data" in response and "Secret" in response["Data"]
+    assert "ParameterName" in response["Data"]
+    assert response["Data"]["ParameterName"] == name_2
 
     physical_resource_id_2 = response["PhysicalResourceId"]
     assert physical_resource_id != physical_resource_id_2

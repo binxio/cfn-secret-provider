@@ -27,6 +27,8 @@ def correct_response(request, response):
     assert "Hash" in response["Data"]
     assert "Version" in response["Data"]
     assert "NoEcho" in response
+    assert "ParameterName" in response["Data"]
+    assert response["Data"]["Arn"].endswith(response["Data"]["ParameterName"])
     assert response["Data"]["Arn"] == physical_resource_id
     assert (
         response["Data"]["Hash"]

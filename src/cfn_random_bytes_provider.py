@@ -132,7 +132,6 @@ class RandomBytesProvider(ResourceProvider):
             version = response["Version"] if "Version" in response else 1
 
             self.set_attribute("Arn", self.arn)
-            self.set_attribute("ParameterName", self.name_from_physical_resource_id())
             self.set_attribute(
                 "Hash", hashlib.md5(kwargs["Value"].encode("utf8")).hexdigest()
             )
@@ -145,6 +144,9 @@ class RandomBytesProvider(ResourceProvider):
             if not ssm_parameter_name.equals(self.physical_resource_id, self.arn):
                 # prevent CFN deleting a resource with identical Arns in different formats.
                 self.physical_resource_id = self.arn
+
+            self.set_attribute("ParameterName", self.name_from_physical_resource_id())
+
         except (TypeError, ClientError) as e:
             if self.request_type == "Create":
                 self.physical_resource_id = "could-not-create"
