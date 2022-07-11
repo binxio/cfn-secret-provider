@@ -28,6 +28,8 @@ Outputs:
         Value: !GetAtt AccessKey.SMTPPassword
     Hash:
         Value: !GetAtt AccessKey.Hash
+    ParameterPath:
+        Value: !GetAtt AccessKey.ParameterPath
 ```
 
 The access key id, access secret and the smtp password are stored in the parameter store under the paths `<ParameterPath>/aws_access_key_id`, `<ParameterPath>/aws_secret_access_key` and `<ParameterPath>/smtp_password` respectively.
@@ -53,5 +55,5 @@ With 'Fn::GetAtt' the following values are available:
 - `SMTPPassword` - the SMTP password based for the access key (if ReturnPassword is true).
 - `SecretAccessKey` - the secret part of the access key (if ReturnSecret is true).
 - `Hash` - a hash of the SMTP password to detect changes in the access key secret.
-
+- `ParameterPath` - path into the SSM parameter store under which the access key and secret are stored.
 For more information about using Fn::GetAtt, see [Fn::GetAtt](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/intrinsic-function-reference-getatt.html).

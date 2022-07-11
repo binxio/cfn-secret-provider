@@ -154,6 +154,7 @@ class RSAKeyProvider(ResourceProvider):
             version = response["Version"] if "Version" in response else 1
 
             self.set_attribute("Arn", self.arn)
+            self.set_attribute("ParameterName", self.name_from_physical_resource_id())
             self.set_attribute("PublicKey", public_key)
             self.set_attribute("PublicKeyPEM", self.public_key_to_pem(private_key))
             self.set_attribute(

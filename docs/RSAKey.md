@@ -42,6 +42,7 @@ With 'Fn::GetAtt' the following values are available:
 - `Arn` - the AWS Resource name of the parameter
 - `Hash` - of the public key
 - `Version` - of the value in the store.
+- `ParameterName` - name of the SSM parameter in which the key is stored.
 
 ### Caveat - Version usage
 Note that the input Version is just an opaque string to force an update of the key if RefreshOnUpdate is true, where as the returned Version attribute is the actual version of the parameter value in the store.

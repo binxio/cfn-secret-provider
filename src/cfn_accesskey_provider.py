@@ -245,6 +245,8 @@ class AccessKeyProvider(ResourceProvider):
             ).hexdigest(),
         )
 
+        self.set_attribute("ParameterPath", self.parameter_path)
+
         self.no_echo = self.get("NoEcho")
 
     def create(self):

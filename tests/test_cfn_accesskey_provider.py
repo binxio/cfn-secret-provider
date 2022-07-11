@@ -291,7 +291,7 @@ def test_rename_parameter_path():
     response = fake_cfn(request, {})
     assert response["Status"] == "SUCCESS", response["Reason"]
     valid_state(request, response)
-    assert create_response["Data"] == response["Data"]
+    assert create_response["Data"]["Hash"] == response["Data"]["Hash"]
     assert create_response["PhysicalResourceId"] == response["PhysicalResourceId"]
     response = ssm.get_parameters_by_path(
         WithDecryption=True, Path=f"{parameter_path}/", Recursive=True

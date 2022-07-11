@@ -1,4 +1,4 @@
 boto3>=1.5.27
-cfn_resource_provider>=0.10.4
+cfn_resource_provider
 cryptography
 pyasn1

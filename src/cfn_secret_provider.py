@@ -219,7 +219,7 @@ class SecretProvider(ResourceProvider):
                 "Hash", hashlib.md5(kwargs["Value"].encode("utf8")).hexdigest()
             )
             self.set_attribute("Version", version)
-
+            self.set_attribute("ParameterName", self.name_from_physical_resource_id())
             if self.get("ReturnSecret"):
                 self.set_attribute("Secret", kwargs["Value"])
             self.no_echo = self.get("NoEcho")
