@@ -4,11 +4,6 @@ NAME=cfn-secret-provider
 
 AWS_REGION=eu-central-1
 AWS_ACCOUNT=$(shell aws sts get-caller-identity --query Account --output text)
-ALL_REGIONS=$(shell aws --region $(AWS_REGION) \
-		ec2 describe-regions 		\
-		--query 'join(`\n`, Regions[?RegionName != `$(AWS_REGION)`].RegionName)' \
-		--output text)
-
 REGISTRY_HOST=$(AWS_ACCOUNT).dkr.ecr.$(AWS_REGION).amazonaws.com
 IMAGE=$(REGISTRY_HOST)/$(USERNAME)/$(NAME)
 TAG_WITH_LATEST=never
@@ -40,23 +35,23 @@ deploy-provider:  ## deploy the provider to the current account
                 --stack-name $(NAME) \
                 --template-file ./cloudformation/cfn-resource-provider.yaml
 
-delete-provider:
+delete-provider:   ## delete provider from the current account
 	aws cloudformation delete-stack --stack-name $(NAME)
 	aws cloudformation wait stack-delete-complete  --stack-name $(NAME)
 
 
 
-deploy-pipeline: 
+deploy-pipeline:   ## deploy the CI/CD pipeline
 	aws cloudformation deploy \
                 --capabilities CAPABILITY_IAM \
                 --stack-name $(NAME)-pipeline \
                 --template-file ./cloudformation/cicd-pipeline.yaml
 
-delete-pipeline: 
+delete-pipeline:   ## delete the CI/CD pipeline
 	aws cloudformation delete-stack --stack-name $(NAME)-pipeline
 	aws cloudformation wait stack-delete-complete  --stack-name $(NAME)-pipeline
 
-demo:
+demo:		   ## deploy the demo
 	aws cloudformation deploy --stack-name $(NAME)-demo \
 		--template-file ./cloudformation/demo-stack.yaml --capabilities CAPABILITY_NAMED_IAM \
                 --parameter-overrides \
@@ -67,7 +62,10 @@ demo:
 		-e AWS_PROFILE=$${AWS_PROFILE:-default} \
 		$(NAME)-demo
 
-delete-demo:
+delete-demo:	   ## delete the demo
 	aws cloudformation delete-stack --stack-name $(NAME)-demo
 	aws cloudformation wait stack-delete-complete  --stack-name $(NAME)-demo
 
+ecr-login:	   ## login to the ECR repository
+	aws ecr get-login-password --region $(AWS_REGION) | \
+	docker login --username AWS --password-stdin $(REGISTRY_HOST)

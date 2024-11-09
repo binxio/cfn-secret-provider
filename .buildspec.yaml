@@ -6,4 +6,5 @@ phases:
       python: 3.9
   build:
     commands:
+      - make ecr-login
       - make snapshot
