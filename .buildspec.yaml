@@ -3,7 +3,6 @@ version: 0.2
 phases:
   install:
     runtime-versions:
-      docker: 20
       python: 3.9
   build:
     commands:
