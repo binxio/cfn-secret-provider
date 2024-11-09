@@ -46,6 +46,7 @@ Resources:
               - Effect: Allow
                 Action:
                   - ec2:DescribeRegions
+                  - ecr:GetAuthorizationToken
                 Resource: 
                   - '*'
 
