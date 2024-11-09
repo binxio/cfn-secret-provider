@@ -1,9 +1,4 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Parameters:
-  S3BucketPrefix:
-    Type: String
-    Default: binxio-public
-
 Resources:
   Project:
     Type: AWS::CodeBuild::Project
@@ -12,24 +7,19 @@ Resources:
       Description: 'cfn-secret-provider builder'
       ServiceRole: !Ref 'ProjectRole'
       Artifacts:
-        Type: no_artifacts
+        Type: NO_ARTIFACTS
       Environment:
         Type: LINUX_CONTAINER
         ComputeType: BUILD_GENERAL1_SMALL
-        Image: aws/codebuild/standard:2.0
+        Image: aws/codebuild/standard:7.0
         PrivilegedMode: true
-        EnvironmentVariables:
-          - Name: LAMBDA_BUCKET_PREFIX
-            Value: !Ref S3BucketPrefix
-            Type: PLAINTEXT
-          - Name: MAKE_TARGET
-            Value: deploy-all-regions
-            Type: PLAINTEXT
       Source:
         Type: GITHUB
         Location: https://github.com/binxio/cfn-secret-provider.git
         BuildSpec: .buildspec.yaml
         GitCloneDepth: 0
+        Auth:
+          Type: OAUTH
       Triggers:
         FilterGroups:
          -  - Type: EVENT
@@ -50,27 +40,27 @@ Resources:
             Condition: {}
       Path: /
       Policies:
-        - PolicyName: CFNSecretProviderBuilder
+        - PolicyName: LambdaBuilder
           PolicyDocument:
             Statement:
-              - Effect: Allow
-                Action:
-                  - s3:ListObjects
-                  - s3:GetBucketLocation
-                Resource: 
-                  - !Sub 'arn:aws:s3:::${S3BucketPrefix}-*'
-              - Effect: Allow
-                Action:
-                  - s3:GetObject
-                  - s3:PutObject
-                  - s3:PutObjectAcl
-                Resource: 
-                  - !Sub 'arn:aws:s3:::${S3BucketPrefix}-*/lambdas/cfn-secret-provider-*'
               - Effect: Allow
                 Action:
                   - ec2:DescribeRegions
                 Resource: 
                   - '*'
+
+              - Effect: Allow
+                Action:
+                  - ecr:GetDownloadUrlForLayer
+                  - ecr:BatchGetImage
+                  - ecr:BatchCheckLayerAvailability
+                  - ecr:PutImage
+                  - ecr:InitiateLayerUpload
+                  - ecr:UploadLayerPart
+                  - ecr:CompleteLayerUpload
+                Resource: 
+                  - !Sub 'arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/xebia/cfn-secret-provider'
+
               - Sid: CloudWatchLogsPolicy
                 Effect: Allow
                 Action:
@@ -79,6 +69,37 @@ Resources:
                   - logs:PutLogEvents
                 Resource:
                   - '*'
+
+  Repository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: xebia/cfn-secret-provider
+      ImageTagMutability: IMMUTABLE
+      RepositoryPolicyText:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: read only access
+            Effect: Allow
+            Principal:
+              AWS:
+                - '*'
+            Action:
+              - ecr:GetDownloadUrlForLayer
+              - ecr:BatchGetImage
+              - ecr:BatchCheckLayerAvailability
+
+          - Sid: write to owner account
+            Effect: Allow
+            Principal:
+              AWS: !Sub 'arn:aws:iam::${AWS::AccountId}:root'
+            Action:
+              - ecr:GetDownloadUrlForLayer
+              - ecr:BatchGetImage
+              - ecr:BatchCheckLayerAvailability
+              - ecr:PutImage
+              - ecr:InitiateLayerUpload
+              - ecr:UploadLayerPart
+              - ecr:CompleteLayerUpload
 
   LogGroup:
     Type: AWS::Logs::LogGroup

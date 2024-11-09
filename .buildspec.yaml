@@ -1,18 +1,13 @@
 ---
 version: 0.2
-env:
-  variables:
-    LAMBDA_BUCKET_PREFIX: binxio-public
-    LAMBDA_BUCKET_REGION: eu-central-1
-    MAKE_TARGET: deploy
 phases:
   install:
     runtime-versions:
-      docker: 18
-      python: 3.7
+      docker: 20
+      python: 3.9
   build:
     commands:
       - >
         echo '{"registry-mirrors": ["https://mirror.gcr.io"]}' > /etc/docker/daemon.json
       - pkill -1 dockerd
-      - make S3_BUCKET_PREFIX=${LAMBDA_BUCKET_PREFIX} AWS_REGION=${LAMBDA_BUCKET_REGION} ${MAKE_TARGET:-deploy}
+      - make deploy

@@ -1,5 +1,5 @@
 #
-#   Copyright 2015  Xebia Nederland B.V.
+#   Copyright 2015-2024  Xebia Nederland B.V.
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -15,20 +15,27 @@
 #
 REGISTRY_HOST=docker.io
 USERNAME=$(USER)
-NAME=$(shell basename $(PWD))
+NAME=$(shell basename $(CURDIR))
 
 RELEASE_SUPPORT := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))/.make-release-support
 IMAGE=$(REGISTRY_HOST)/$(USERNAME)/$(NAME)
 
+
 VERSION=$(shell . $(RELEASE_SUPPORT) ; getVersion)
+BASE_RELEASE=$(shell . $(RELEASE_SUPPORT) ; getRelease)
+
 TAG=$(shell . $(RELEASE_SUPPORT); getTag)
+TAG_WITH_LATEST=always
 
 SHELL=/bin/bash
 
-.PHONY: pre-build do-build post-build build release patch-release minor-release major-release tag check-status check-release showver \
-	push do-push post-push
+DOCKER_BUILD_CONTEXT=.
+DOCKER_FILE_PATH=Dockerfile
 
-build: pre-build do-build post-build
+.PHONY: pre-build docker-build post-build build release patch-release minor-release major-release tag check-status check-release showver \
+	push pre-push do-push post-push showimage
+
+build: pre-build docker-build post-build	## builds a new version of your container image
 
 pre-build:
 
@@ -36,28 +43,26 @@ pre-build:
 post-build:
 
 
+pre-push:
+
+
 post-push:
 
 
-do-build: .release
-	@if [[ -f Dockerfile ]]; then docker build -t $(IMAGE):$(VERSION) . ; else echo "INFO: No Dockerfile found." >/dev/null ; fi
-	@if [[ -f Dockerfile ]]; then \
-		DOCKER_MAJOR=$(shell docker -v | sed -e 's/.*version //' -e 's/,.*//' | cut -d\. -f1) ; \
-		DOCKER_MINOR=$(shell docker -v | sed -e 's/.*version //' -e 's/,.*//' | cut -d\. -f2) ; \
-		if [ $$DOCKER_MAJOR -eq 1 ] && [ $$DOCKER_MINOR -lt 10 ] ; then \
-			echo docker tag -f $(IMAGE):$(VERSION) $(IMAGE):latest ;\
-			docker tag -f $(IMAGE):$(VERSION) $(IMAGE):latest ;\
-		else \
-			echo docker tag $(IMAGE):$(VERSION) $(IMAGE):latest ;\
-			docker tag $(IMAGE):$(VERSION) $(IMAGE):latest ; \
-		fi ; \
+docker-build: .release
+	docker build $(DOCKER_BUILD_ARGS) -t $(IMAGE):$(VERSION) $(DOCKER_BUILD_CONTEXT) -f $(DOCKER_FILE_PATH)
+	@if [[ $(TAG_WITH_LATEST) != never ]] && ([[ $(TAG_WITH_LATEST) == always ]] || [[ $(BASE_RELEASE) == $(VERSION) ]]); then \
+		echo docker tag $(IMAGE):$(VERSION) $(IMAGE):latest >&2; \
+		docker tag $(IMAGE):$(VERSION) $(IMAGE):latest; \
 	else \
-		echo 'No Dockerfile found.' > /dev/null ;\
+		echo docker rmi --force --no-prune $(IMAGE):latest >&2; \
+		docker rmi --force --no-prune $(IMAGE):latest 2>/dev/null; \
 	fi
 
 .release:
 	@echo "release=0.0.0" > .release
 	@echo "tag=$(NAME)-0.0.0" >> .release
+	@echo "tag_on_changes_in=." >> .release
 	@echo INFO: .release created
 	@cat .release
 
@@ -65,37 +70,40 @@ do-build: .release
 release: check-status check-release build push
 
 
-push: do-push post-push 
+push: pre-push do-push post-push
 
-do-push: 
-	@if  [[ -f Dockerfile ]]; then  \
-		docker push $(IMAGE):$(VERSION) ; \
-		docker push $(IMAGE):latest ; \
-	else \
-		echo > /dev/null ; \
+do-push: IMAGE_EXISTS=$(shell docker manifest inspect $(IMAGE):$(VERSION) 2>/dev/null)
+do-push:
+	docker push $(IMAGE):$(VERSION)
+	@if [[ $(TAG_WITH_LATEST) != never ]] && ([[ $(TAG_WITH_LATEST) == always ]] || [[ $(BASE_RELEASE) == $(VERSION) ]]); then \
+		echo docker push $(IMAGE):latest >&2; \
+		docker push $(IMAGE):latest; \
 	fi
 
-snapshot: build push
+snapshot: build push				## builds a new version of your container image, and pushes it to the registry
 
-showver: .release
+showver: .release				## shows the current release tag based on the workspace
 	@. $(RELEASE_SUPPORT); getVersion
 
+showimage: .release				## shows the container image name based on the workspace
+	@echo $(IMAGE):$(VERSION)
+
 tag-patch-release: VERSION := $(shell . $(RELEASE_SUPPORT); nextPatchLevel)
-tag-patch-release: .release tag 
+tag-patch-release: .release tag 		## increments the patch release level and create the tag without build
 
 tag-minor-release: VERSION := $(shell . $(RELEASE_SUPPORT); nextMinorLevel)
-tag-minor-release: .release tag 
+tag-minor-release: .release tag 		## increments the minor release level and create the tag without build
 
 tag-major-release: VERSION := $(shell . $(RELEASE_SUPPORT); nextMajorLevel)
-tag-major-release: .release tag 
+tag-major-release: .release tag 		## increments the major release level and create the tag without build
 
-patch-release: tag-patch-release release
+patch-release: tag-patch-release release	## increments the patch release level, build and push to registry
 	@echo $(VERSION)
 
-minor-release: tag-minor-release release
+minor-release: tag-minor-release release	## increments the minor release level, build and push to registry
 	@echo $(VERSION)
 
-major-release: tag-major-release release
+major-release: tag-major-release release	## increments the major release level, build and push to registry
 	@echo $(VERSION)
 
 
@@ -106,11 +114,15 @@ tag: check-status
 	git add .
 	git commit -m "bumped to version $(VERSION)" ;
 	git tag $(TAG) ;
-	@if [ -n "$(shell git remote -v)" ] ; then git push --tags ; fi
+	@ if [ -n "$(shell git remote -v)" ] ; then git push --tags ; else echo 'no remote to push tags to' ; fi
 
-check-status:
-	@. $(RELEASE_SUPPORT) ; ! hasChanges || (echo "ERROR: there are still outstanding changes" >&2 && exit 1) ;
+check-status:			## checks whether there are outstanding changes
+	@. $(RELEASE_SUPPORT) ; ! hasChanges || (echo "ERROR: there are still outstanding changes" >&2 && showChanges >&2 && exit 1) ;
 
-check-release: .release
+check-release: .release		## checks whether the workspace matches the tagged release in git
 	@. $(RELEASE_SUPPORT) ; tagExists $(TAG) || (echo "ERROR: version not yet tagged in git. make [minor,major,patch]-release." >&2 && exit 1) ;
-	@. $(RELEASE_SUPPORT) ; ! differsFromRelease $(TAG) || (echo "ERROR: current directory differs from tagged $(TAG). make [minor,major,patch]-release." ; exit 1)
+	@. $(RELEASE_SUPPORT) ; ! differsFromRelease $(TAG) || (echo "ERROR: current directory differs from tagged $(TAG). make [minor,major,patch]-release." && showDiffFromRelease >&2 ; exit 1)
+
+
+help:           ## show this help.
+	@fgrep -h "##" $(MAKEFILE_LIST) | grep -v fgrep | sed -e 's/\([^:]*\):[^#]*##\(.*\)/printf '"'%-20s - %s\\\\n' '\1' '\2'"'/' |bash

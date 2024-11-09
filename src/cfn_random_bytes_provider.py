@@ -7,7 +7,6 @@ import os
 import boto3
 from botocore.exceptions import ClientError
 from cfn_resource_provider import ResourceProvider
-from past.builtins import basestring
 
 import ssm_parameter_name
 
@@ -75,21 +74,21 @@ class RandomBytesProvider(ResourceProvider):
     def convert_property_types(self):
         try:
             if "Length" in self.properties and isinstance(
-                self.properties["Length"], basestring
+                self.properties["Length"], str
             ):
                 self.properties["Length"] = int(self.properties["Length"])
             if "ReturnSecret" in self.properties and isinstance(
-                self.properties["ReturnSecret"], basestring
+                self.properties["ReturnSecret"], str
             ):
                 self.properties["ReturnSecret"] = (
                     self.properties["ReturnSecret"] == "true"
                 )
             if "NoEcho" in self.properties and isinstance(
-                self.properties["NoEcho"], basestring
+                self.properties["NoEcho"], str
             ):
                 self.properties["NoEcho"] = self.properties["NoEcho"] == "true"
             if "RefreshOnUpdate" in self.properties and isinstance(
-                self.properties["RefreshOnUpdate"], basestring
+                self.properties["RefreshOnUpdate"], str
             ):
                 self.properties["RefreshOnUpdate"] = (
                     self.properties["RefreshOnUpdate"] == "true"

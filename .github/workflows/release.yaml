@@ -15,10 +15,10 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v1
         with:
-          python-version: 3.8
+          python-version: 3.9
       - name: checkout
         run: git fetch --prune --unshallow
       - name: pipenv
         run: pip install pipenv && pipenv sync -d 
-      - name: deploy all regions
-        run: make deploy-all-regions
+      - name: deploy
+        run: make snapshot
