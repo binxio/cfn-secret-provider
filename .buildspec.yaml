@@ -6,4 +6,4 @@ phases:
       python: 3.9
   build:
     commands:
-      - make deploy
+      - make snapshot
