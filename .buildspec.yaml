@@ -6,7 +6,4 @@ phases:
       python: 3.9
   build:
     commands:
-      - >
-        echo '{"registry-mirrors": ["https://mirror.gcr.io"]}' > /etc/docker/daemon.json
-      - pkill -1 dockerd
       - make deploy
