@@ -74,7 +74,7 @@ aws cloudformation create-stack \
 
 aws cloudformation wait stack-create-complete  --stack-name cfn-secret-provider 
 ```
-This CloudFormation template will use our pre-packaged provider from `444093529715.dkr.ecr.eu-central-1.amazonaws.com/xebia/cfn-secret-provider:2.0.1-b39b00b-dirty`
+This CloudFormation template will use our pre-packaged provider from `463637877380.dkr.ecr.eu-central-1.amazonaws.com/xebia/cfn-secret-provider:2.0.1`
 
 ## Demo
 To install the simple sample of the Custom Resource, type:
